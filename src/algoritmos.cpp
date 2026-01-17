@@ -236,6 +236,9 @@ Solucao Algoritmos::construirGuloso() const {
     
     solucao.calcularCusto();
     solucao.verificarViabilidade();
+
+    std::cout << "Custo total: " << solucao.getCustoTotal() << std::endl;
+    std::cout << "Viabilidade: " << solucao.isValida() << std::endl;
     
     return solucao;
 }
@@ -256,46 +259,34 @@ Solucao Algoritmos::construirGulosoRandomizado(double alpha) const {
         
         if (candidatos.empty()) {
             // Não há candidatos viáveis - tentar forçar conexão com a raiz
-            std::vector<int> naoConectados;
+            bool conectouAlgum = false;
             for (int v = 0; v < n; v++) {
                 if (!conectados[v] && grafo->existeAresta(v, raiz)) {
+                    // Verificar capacidade (nova subárvore)
                     if (grafo->getDemanda(v) <= grafo->getCapacidade()) {
-                        naoConectados.push_back(v);
+                        solucao.setPai(v, raiz);
+                        conectados[v] = true;
+                        numConectados++;
+                        conectouAlgum = true;
+                        break;
                     }
                 }
             }
             
-            if (naoConectados.empty()) {
-                break;  // Não consegue continuar
+            if (!conectouAlgum) {
+                // Problema: não consegue conectar todos os vértices
+                break;
             }
-            
-            // Escolher aleatoriamente entre os não conectados
-            int idx = Randomizador::randInt(0, naoConectados.size() - 1);
-            int v = naoConectados[idx];
-            solucao.setPai(v, raiz);
-            conectados[v] = true;
-            numConectados++;
         } else {
-            // Construir Lista Restrita de Candidatos (LRC)
-            double custoMin = candidatos.front().custo;
-            double custoMax = candidatos.back().custo;
-            double limiar = custoMin + alpha * (custoMax - custoMin);
+            // Construir Lista Restrita de Candidatos (LRC) baseada em cardinalidade
+            int tamanhoLRC = std::max(1, (int)std::floor(alpha * candidatos.size()));
             
-            // Filtrar candidatos dentro do limiar
-            std::vector<Candidato> lrc;
-            for (const auto& c : candidatos) {
-                if (c.custo <= limiar) {
-                    lrc.push_back(c);
-                }
-            }
+            // Garantir que não ultrapasse o tamanho da lista
+            tamanhoLRC = std::min(tamanhoLRC, (int)candidatos.size());
             
-            if (lrc.empty()) {
-                lrc.push_back(candidatos[0]);  // Pelo menos o melhor
-            }
-            
-            // Escolher aleatoriamente da LRC
-            int idx = Randomizador::randInt(0, lrc.size() - 1);
-            const Candidato& escolhido = lrc[idx];
+            // Escolher aleatoriamente entre os primeiros tamanhoLRC candidatos
+            int idx = Randomizador::randInt(0, tamanhoLRC - 1);
+            const Candidato& escolhido = candidatos[idx];
             
             solucao.setPai(escolhido.vertice, escolhido.pai);
             conectados[escolhido.vertice] = true;
@@ -310,7 +301,7 @@ Solucao Algoritmos::construirGulosoRandomizado(double alpha) const {
 }
 
 // Executa algoritmo guloso
-Solucao Algoritmos::executarGuloso(ResultadoExecucao& resultado) {
+Solucao Algoritmos::executarGuloso(ResultadoExecucao& resultado, bool verbose) {
     Cronometro crono;
     crono.iniciar();
     
@@ -339,17 +330,29 @@ Solucao Algoritmos::executarGuloso(ResultadoExecucao& resultado) {
 
 // Executa algoritmo guloso randomizado
 Solucao Algoritmos::executarGulosoRandomizado(double alpha, int numIteracoes,
-                                               ResultadoExecucao& resultado) {
+                                               ResultadoExecucao& resultado, bool verbose) {
     Cronometro crono;
     crono.iniciar();
     
     Solucao melhorSolucao(grafo);
     double melhorCusto = INFINITO;
+
+    // Solucao melhorSolucao = construirGuloso();
+    // double melhorCusto = melhorSolucao.getCustoTotal();
+
     double somaCustos = 0;
     
     for (int iter = 0; iter < numIteracoes; iter++) {
         Solucao solucaoAtual = construirGulosoRandomizado(alpha);
         double custoAtual = solucaoAtual.getCustoTotal();
+        
+        if (verbose) {
+            std::cout << "\nIter: " << iter << std::endl;
+            std::cout << "Custo total: " << custoAtual << std::endl;
+            std::cout << "Melhor custo: " << melhorCusto << std::endl;
+            std::cout << "Viabilidade: " << solucaoAtual.isValida() << std::endl;   
+        }
+
         somaCustos += custoAtual;
         
         if (custoAtual < melhorCusto && solucaoAtual.isValida()) {
@@ -382,7 +385,7 @@ Solucao Algoritmos::executarGulosoRandomizado(double alpha, int numIteracoes,
 // Executa algoritmo guloso randomizado reativo
 Solucao Algoritmos::executarGulosoReativo(const std::vector<double>& alphas,
                                            int numIteracoes, int tamanhoBloco,
-                                           ResultadoExecucao& resultado) {
+                                           ResultadoExecucao& resultado, bool verbose) {
     Cronometro crono;
     crono.iniciar();
     
@@ -404,6 +407,7 @@ Solucao Algoritmos::executarGulosoReativo(const std::vector<double>& alphas,
     double melhorCustoGlobal = INFINITO;
     int melhorAlphaIdx = 0;
     double somaCustos = 0;
+    double FATOR_AMPLIFICACAO = 3;
     
     for (int iter = 0; iter < numIteracoes; iter++) {
         // Selecionar alpha baseado nas probabilidades
@@ -439,6 +443,15 @@ Solucao Algoritmos::executarGulosoReativo(const std::vector<double>& alphas,
         
         // Atualizar probabilidades a cada bloco
         if ((iter + 1) % tamanhoBloco == 0 && iter > 0) {
+
+            if (verbose) {
+                std::cout << "\nIter: " << iter << std::endl;
+
+                for(int i = 0; i < numAlphas; i++) {
+                    std::cout << "Alpha: " << alphas[i] << " - Probabilidade: " << probabilidades[i] << std::endl;
+                }
+            }
+
             // Calcular qualidade de cada alpha
             std::vector<double> qualidade(numAlphas, 0);
             double somaQualidades = 0;
@@ -448,28 +461,36 @@ Solucao Algoritmos::executarGulosoReativo(const std::vector<double>& alphas,
                     // Qualidade = melhor global / melhor do alpha
                     // Quanto menor o custo, maior a qualidade
                     qualidade[i] = melhorCustoGlobal / melhorPorAlpha[i];
-                    qualidade[i] = std::pow(qualidade[i], 2);  // Elevar ao quadrado para amplificar
+                    qualidade[i] = std::pow(qualidade[i], FATOR_AMPLIFICACAO);  // Elevar ao quadrado para amplificar
                 } else {
                     qualidade[i] = 0.1;  // Valor mínimo para alphas não usados
                 }
                 somaQualidades += qualidade[i];
+            }
+
+            if (verbose) {
+                for(int i = 0; i < numAlphas; i++) {
+                    std::cout << "Alpha: " << alphas[i] << " - Qualidade: " << qualidade[i] << std::endl;
+                }
+
+                for(int i = 0; i < numAlphas; i++) {
+                    std::cout << "Alpha: " << alphas[i] << " - Melhor por Alpha: " << melhorPorAlpha[i] << std::endl;
+                }
+
+                std::cout << "Soma Qualidades: " << somaQualidades << std::endl;
             }
             
             // Normalizar para obter probabilidades
             if (somaQualidades > 0) {
                 for (int i = 0; i < numAlphas; i++) {
                     probabilidades[i] = qualidade[i] / somaQualidades;
-                    
-                    // Garantir probabilidade mínima
-                    if (probabilidades[i] < 0.05) {
-                        probabilidades[i] = 0.05;
-                    }
                 }
-                
-                // Renormalizar
-                double soma = 0;
-                for (double p : probabilidades) soma += p;
-                for (double& p : probabilidades) p /= soma;
+            }
+
+            if (verbose) {
+                for(int i = 0; i < numAlphas; i++) {
+                    std::cout << "Alpha: " << alphas[i] << " - Nova probabilidade: " << probabilidades[i] << std::endl;
+                }
             }
         }
     }

@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
         if (verbose) {
             std::cout << "Executando algoritmo guloso..." << std::endl;
         }
-        melhorSolucao = alg.executarGuloso(resultado);
+        melhorSolucao = alg.executarGuloso(resultado, verbose);
         
     } else if (algoritmo == "randomizado") {
         if (verbose) {
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
             std::cout << "  Alpha: " << alpha << std::endl;
             std::cout << "  Iterações: " << numIteracoes << std::endl;
         }
-        melhorSolucao = alg.executarGulosoRandomizado(alpha, numIteracoes, resultado);
+        melhorSolucao = alg.executarGulosoRandomizado(alpha, numIteracoes, resultado, verbose);
         
     } else if (algoritmo == "reativo") {
         if (verbose) {
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
             std::cout << "  Iterações: " << numIteracoes << std::endl;
             std::cout << "  Tamanho do bloco: " << tamanhoBloco << std::endl;
         }
-        melhorSolucao = alg.executarGulosoReativo(alphas, numIteracoes, tamanhoBloco, resultado);
+        melhorSolucao = alg.executarGulosoReativo(alphas, numIteracoes, tamanhoBloco, resultado, verbose);
         
     } else {
         std::cerr << "Algoritmo desconhecido: " << algoritmo << std::endl;
@@ -209,6 +209,9 @@ int main(int argc, char* argv[]) {
         double desvio = ((resultado.melhorSolucao - resultado.solucaoOtima) / resultado.solucaoOtima) * 100;
         std::cout << "Solução ótima conhecida: " << Utils::formatarDouble(resultado.solucaoOtima, 2) << std::endl;
         std::cout << "Desvio percentual: " << Utils::formatarDouble(desvio, 2) << "%" << std::endl;
+    } else {
+        std::cout << "Solução ótima conhecida: Não disponível" << std::endl;
+        std::cout << "Desvio percentual: Não disponível" << std::endl;
     }
     
     std::cout << "Solução válida: " << (melhorSolucao.isValida() ? "Sim" : "Não") << std::endl;

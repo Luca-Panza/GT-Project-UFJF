@@ -49,14 +49,20 @@ bool Grafo::carregarInstancia(const std::string& nomeArquivo) {
     std::string conteudo;
     std::string linha;
     std::getline(arquivo, linha);  // Consumir resto da primeira linha
-    
-    // Ler todo o conteúdo restante
+
+    // Ler todo o conteúdo restante, guardando a última linha separadamente para verificar se há solução ótima
+    std::string ultimaLinha;
     while (std::getline(arquivo, linha)) {
         // Remover \r se houver (Windows line endings)
         if (!linha.empty() && linha.back() == '\r') {
             linha.pop_back();
         }
-        conteudo += linha + " ";
+        // conteudo += linha + " ";
+
+        if (!linha.empty()) {
+            ultimaLinha = linha;  // Guardar última linha não vazia
+            conteudo += linha + " ";
+        }
     }
     arquivo.close();
     
@@ -112,12 +118,29 @@ bool Grafo::carregarInstancia(const std::string& nomeArquivo) {
         }
     }
 
-    // Verificar se há valor de solução ótima no final (último valor se houver excesso)
-    if ((int)valores.size() > esperado) {
-        // O último valor é a solução ótima
-        solucaoOtima = valores.back();
-    } else {
-        solucaoOtima = -1;  // Não disponível
+    // Verificar se há solução ótima na última linha do arquivo
+    // A solução ótima aparece como uma linha separada com apenas um número
+    solucaoOtima = -1;  // Padrão: não disponível
+    
+    if (!ultimaLinha.empty()) {
+        // Verificar se a última linha contém apenas um número (possivelmente com espaços)
+        std::istringstream ultimaIss(ultimaLinha);
+        std::string primeiroToken;
+        ultimaIss >> primeiroToken;
+
+
+        std::cout << "Primeiro token: " << primeiroToken << std::endl;
+        std::cout << "Valores: " << valores.size() << std::endl;
+        std::cout << "Esperado: " << esperado << std::endl;
+    
+        // Se há apenas um token e é um número válido, é a solução ótima
+        if (!primeiroToken.empty()) {
+            try {
+                solucaoOtima = std::stod(primeiroToken);
+            } catch (...) {
+                // Não é um número válido, não há solução ótima
+            }
+        }
     }
 
     return true;

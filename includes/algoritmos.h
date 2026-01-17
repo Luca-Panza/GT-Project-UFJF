@@ -96,7 +96,7 @@ public:
      * @param resultado Estrutura para armazenar resultados
      * @return Melhor solução encontrada
      */
-    Solucao executarGuloso(ResultadoExecucao& resultado);
+    Solucao executarGuloso(ResultadoExecucao& resultado, bool verbose = false);
 
     /**
      * Executa o algoritmo guloso randomizado
@@ -105,8 +105,7 @@ public:
      * @param resultado Estrutura para armazenar resultados
      * @return Melhor solução encontrada
      */
-    Solucao executarGulosoRandomizado(double alpha, int numIteracoes, 
-                                       ResultadoExecucao& resultado);
+    Solucao executarGulosoRandomizado(double alpha, int numIteracoes, ResultadoExecucao& resultado, bool verbose = false);
 
     /**
      * Executa o algoritmo guloso randomizado reativo
@@ -118,7 +117,7 @@ public:
      */
     Solucao executarGulosoReativo(const std::vector<double>& alphas,
                                    int numIteracoes, int tamanhoBloco,
-                                   ResultadoExecucao& resultado);
+                                   ResultadoExecucao& resultado, bool verbose = false);
 };
 
 #endif // ALGORITMOS_H
