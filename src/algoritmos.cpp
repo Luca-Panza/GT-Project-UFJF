@@ -155,8 +155,7 @@ bool Algoritmos::podeAdicionar(const Solucao& solucao, int vertice, int paiVerti
 }
 
 // Gera lista de candidatos viáveis
-std::vector<Candidato> Algoritmos::gerarCandidatos(const Solucao& solucao, 
-                                                     const std::vector<bool>& conectados) const {
+std::vector<Candidato> Algoritmos::gerarCandidatos(const Solucao& solucao, const std::vector<bool>& conectados) const {
     std::vector<Candidato> candidatos;
     int n = grafo->getNumVertices();
     int raiz = grafo->getRaiz();
@@ -329,8 +328,7 @@ Solucao Algoritmos::executarGuloso(ResultadoExecucao& resultado, bool verbose) {
 }
 
 // Executa algoritmo guloso randomizado
-Solucao Algoritmos::executarGulosoRandomizado(double alpha, int numIteracoes,
-                                               ResultadoExecucao& resultado, bool verbose) {
+Solucao Algoritmos::executarGulosoRandomizado(double alpha, int numIteracoes, ResultadoExecucao& resultado, bool verbose) {
     Cronometro crono;
     crono.iniciar();
     
@@ -383,9 +381,7 @@ Solucao Algoritmos::executarGulosoRandomizado(double alpha, int numIteracoes,
 }
 
 // Executa algoritmo guloso randomizado reativo
-Solucao Algoritmos::executarGulosoReativo(const std::vector<double>& alphas,
-                                           int numIteracoes, int tamanhoBloco,
-                                           ResultadoExecucao& resultado, bool verbose) {
+Solucao Algoritmos::executarGulosoReativo(const std::vector<double>& alphas, int numIteracoes, int tamanhoBloco, ResultadoExecucao& resultado, bool verbose) {
     Cronometro crono;
     crono.iniciar();
     
