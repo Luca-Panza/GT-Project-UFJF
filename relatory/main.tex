@@ -1,0 +1,374 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{tikz,tikz-3dplot} 
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+\geometry{a4paper, margin=2.5cm}
+\setlength { \parskip }{0.3\baselineskip }
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+
+%=======================================================
+%  INDIQUE AQUI O NOME DO PROBLEMA E A EQUIPE 
+%=======================================================
+\title{Universidade Federal de Juiz de Fora \\
+        DCC059 - Teoria dos Grafos \\
+        \vspace{6.0cm}
+        {\Huge\textbf{Nome do Problema \\
+                      Abordado}}\\
+        \vspace{6.0cm}
+}
+\author{
+    Nome do Aluno 1 - Matricula: \\
+    Nome do Aluno 2 - Matricula: \\
+    Nome do Aluno 3 - Matricula: \\
+    Nome do Aluno 4 - Matricula: \\
+}
+\date{Janeiro de 2026}
+
+
+
+
+
+%=======================================================
+%=======================================================
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+%=======================================================
+%                 I N T R O D U Ç Ã O
+%=======================================================
+\section{Introdução}
+O presente relatório tem como objetivo $\dots$. Considerou-se neste trabalho as características do problema  $\dots$. Foram desenvolvidos três algoritmos construtivos:  um algoritmo gulosos, um randomizados e um reativo, que foram avaliados sobre um conjunto de instâncias e os resultados foram comparados com os apresentados em citar.
+
+Note que nesta seção você deve dar uma visão geral do que consiste o trabalho, podendo destacar o contexto do mesmo no escopo da disciplina de Grafos, os objetivos e a motivação para o desenvolvimento do mesmo. O último parágrafo segue mais ou menos o modelo a seguir.
+
+O restante do trabalho está assim estruturado: na Seção \ref{secProblema} o problema é descrito formalmente através de um modelo em grafos; a Seção \ref{secAlgoritmos} descreve as abordagens propostas para o problema, enquanto a Seção \ref{secResultados} apresenta os experimentos computacionais, onde se descreve o design dos experimentos, o conjunto de instâncias (\textit{benchmarks}), bem como se apresenta a análise comparativa dos resultados dos algoritmos desenvolvidos e a literatura; por fim, a Seção \ref{secConclusoes} traz as conclusões do trabalho e propostas de trabalhos futuros.
+
+
+
+%=======================================================
+%     D E S C R I Ç Ã O     D O    P R O B L E M A
+%=======================================================
+\section{Descrição do Problema}
+\label{secProblema}
+
+Dado um grafo \( G = (V, E) \), um conjunto \( D \subseteq V \) é um ... conforme descrito em \cite{tumuluru2014unit}.
+
+Nesta seção você deve descrever formalmente o problema modelado em grafos. Caso sejam usadas equações para isso, seguem alguns exemplos:
+
+$\dots$ o problema  pode ser formulado por:
+
+Função objetivo:
+\begin{eqnarray}
+min ~Z ~= \sum_{j=1}^{T} \sum_{i=1}^{H} C(Pot_{ij})\times x_{ij}   & & \label{func_obj}
+\end{eqnarray}
+
+Onde o custo de produção é dado por:
+\begin{eqnarray}
+C(Pot_{ij}) = a\times (Pot_{ij})^2+b\times Pot_{ij}+c
+\end{eqnarray}
+
+sujeito a:
+
+\begin{eqnarray}
+%Os limites de geração para a usina
+x_{ij} \times p_{i}  \leq ~~Pot_{ij} ~~\leq ~~ x_{ij} ~~\times ~~P_{i} ~~,  ~~\forall  i \in V=\{1,...,H\},~~\forall ~~ j\in W=\{1,...,T\} \label{restr_3}
+\end{eqnarray}
+%
+\begin{eqnarray}
+%Balanço de energia produzida
+\sum_{j=1}^{T} \sum_{i=1}^{H} (Pot_{ij}\times x_{ij}) - D_{j} = 0 , ~~ \forall  i\in V=\{1,...,H\},~~\forall  j\in W=\{1,...,T\}  \label{restr_4}
+\end{eqnarray}
+%Exigência de reserva do sistema
+\begin{eqnarray}
+\sum_{j=1}^{T} \sum_{i=1}^{H} (P_{ij}\times x_{ij}) \geq D_{j}+V_{j} ,  ~~\forall ~~ i\in V=\{1,...,H\},~~\forall ~~ j\in W=\{1,...,T\}  \label{restr_5}
+\end{eqnarray}
+
+
+A função objetivo (\ref{func_obj})   minimiza o custo total da geração de energia.  As restrições (\ref{restr_3}) se referem aos limites de geração da usina e limitarão qual o mínimo e o máximo que cada usina geradora $i$ pode alcançar.As restrições (\ref{restr_4}) garantem o balanceamento de energia produzida, pela qual a usina irá gerar energia de acordo com a demanda da mesma. As restrições (\ref{restr_5}) satisfazem as exigências de reserva do sistema, visando o armazenamento necessário para cada período. 
+
+\textbf{Observação:} estas equações são apenas um exemplo. Você não precisa descrever o problema na forma de Programação Matemática, mas é essencial que o problema seja descrito formalmente através de  modelagem em grafos.
+
+Ilustre sempre que possível e, sempre que inserir uma figura ou tabela, escreva algo que a explique. Como é possível observar na Figura \ref{fig:exemplo-imagem}, $\dots$.
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img/Grafo-konigsberg.jpg} % substitua pelo nome do arquivo da sua imagem
+    \caption{Essa figura é um arquivo jpg  (Fonte: \cite{} - indique quem fez a figura)}
+    \label{fig:exemplo-imagem}
+\end{figure}
+
+Se preferir, desenhe os grafos da instância e de uma solução para ilustrar melhor o problema.
+
+\begin{figure}[ht!]
+  \label{fig:acima}
+  \centering
+  
+  \begin{subfigure}{0.95\textwidth}
+    \centering
+    \input{img/grafo1}
+    \caption{Instância desenhada no arquivo grafo1 }
+    \label{fig:grafo1}
+  \end{subfigure}
+  
+\vspace{1cm} % espaço vertical de 1cm entre figura de cima e as de baixo
+  \begin{subfigure}{0.45\textwidth}
+    \centering
+    % use resizebox se precisar reduzir ou aumentar uma figura
+    \resizebox{0.9\textwidth}{!}{ 
+    \input{img/grafo2}
+    }
+    \caption{Solução do arquivo grafo2}
+    \label{fig:grafo2}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.45\textwidth}
+    \centering
+    % use resizebox se precisar reduzir ou aumentar uma figura
+    \resizebox{0.9\textwidth}{!}{
+    \input{img/grafo3}
+    }
+    \caption{Outra solução do arquivo grafo3}
+    \label{fig:grafo2-ladoalado}
+  \end{subfigure}
+  
+  \caption{Exemplo do problema XXX }
+\end{figure}
+
+Os exemplos de grafos incluídos nos arquivos têm estilos diferentes para ilustrar diferentes possibilidades, caso queiram utilizar esse recurso. Outros exemplos de grafos podem ser encontrados em \href{https://tikz.net}{Tikz.net} ou em \href{https://texample.net}{TeXample.net}.
+
+
+
+%=======================================================
+%                 A L G O R I T M O S
+%=======================================================
+\section{Algoritmos Implementados}
+\label{secAlgoritmos}
+
+Nesta seção são detalhados os algoritmos propostos para a obtenção de soluções para o problema xyz.
+É importante que os algoritmos sejam apresentados de forma detalhada, de forma que seja possível que qualquer pessoa consiga reproduzir os algoritmos propostos. 
+
+\subsection{Algoritmo Guloso}
+\label{subSecAlgGuloso}
+
+Descrever o algoritmo guloso, colocando também o pseudocódigo. Vide exemplo no Algoritmo \ref{algGuloso}. Lembre-se de descrever o algoritmo apresentado, a numeração das linhas pode ajudar nesta explicação. Os algoritmos não são autoexplicativos, você precisa direcionar o leitor na leitura do pseudocódigo.
+
+\begin{algorithm}[H]
+\caption{Algoritmo Guloso}
+\label{algGuloso}
+\KwIn{Grafo \( G = (V, E) \)}
+\KwOut{Conjunto ...)}
+
+\While{$V_{restante} \neq \emptyset$}{
+    Exemplo de Algoritmo\\
+}
+\Return{$D$}
+\end{algorithm}
+
+Pode ser interessante destacar as limitações do algoritmo proposto, destacando os cenários onde é mais difícil para o algoritmo obter boas soluções. 
+
+
+\subsection{Algoritmo Guloso Randomizado}
+\label{subSecAlgRand}
+
+Descrever o algoritmo guloso randomizado, justificar a proposta do mesmo sobre as limitações da abordagem gulosa descrita na seção anterior e colocar também o pseudocódigo.
+
+
+\subsection{Algoritmo Guloso Randomizado Reativo}
+\label{subSecAlgRandReact}
+Descrever o algoritmo guloso randomizado reativo, justificar a proposta do mesmo sobre as limitações da abordagem gulosa randomizada descrita na seção anterior e colocar também o pseudocódigo.
+
+\begin{figure}[ht]
+\centering
+\resizebox{0.5\textwidth}{!}{
+    \input{img/diagramaFluxo}
+}
+\caption{Exemplo imagem}
+\label{fig:fluxograma}
+\end{figure}
+
+\textbf{Além do} pseudocódigo, você também pode acrescentar uma figura com um fluxograma, como na Figura \ref{fig:fluxograma}.
+
+
+
+
+%=======================================================
+%                 E X P E R I M E N T O S 
+%=======================================================
+\label{secExperimentos}
+\section{Experimentos computacionais}
+\label{secResultados}
+Nesta seção você deve descrever todo o experimento computacional. Para tanto, defina subseções.
+
+\subsection{Descrição das instâncias}
+\label{subSecInstancias}
+Descreva as instâncias citando a referência onde as mesmas foram obtidas, se você testou apenas um subconjunto de instâncias da referência, explique qual(is) o(s) critério(s) utilizado(s) para a seleção do conjunto de instâncias usadas. Você pode listar as instâncias em uma tabela como no exemplo da Tabela \ref{tabInstancias}. E note que para o seu problema não necessariamente você terá todas essas colunas.
+
+\begin{table}[!h]
+\centering
+\caption{Exemplo de tabela com descrição das instâncias}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Instância}} & \multicolumn{1}{c|}{\textbf{Núm Arestas}} & \multicolumn{1}{c|}{\textbf{Núm Vértices}} & \multicolumn{1}{c|}{\textbf{$K$}} & \multicolumn{1}{c|}{\textbf{$L$}}  \\ \hline
+st323\_70a & 323 & 70 & 14 & 9   \\ \hline
+proB789\_100a & 789 & 100 & 20 & 10  \\ \hline
+lin884\_318 & 884 & 118 & 64 & 10   \\ \hline \hline
+pcb2208\_442 & 2.208  & 442 & 89 & 10  \\ \hline
+pr5314 & 5.314 & 439 & 88 & 10  \\ \hline
+wath4180 & 4.180 & 699 & 20 & 25\\ \hline
+lin41817\_710 & 41.817 & 710 & 21 & 25  \\ \hline \hline
+kro121002 & 121.002 & 1.000 & 120 & 25  \\ \hline
+dilc & 91.217 & 2.620 & 153 & 250  \\ \hline
+pro789\_100a & 117.890 & 3.200 & 200 & 107  \\ \hline
+\end{tabular}
+\label{tabInstancias}
+\end{table}
+
+
+\subsection{Ambiente computacional e  parâmetros}
+\label{subSecAmbiente}
+Descreva o ambiente computacional utilizado citando a linguagem de programação, o compilador utilizado, o processador da máquina utilizada nos testes, o gerador de números aleatórios etc).
+
+Descreva o conjunto de parâmetros usado (número de iterações, valores de $\alpha$ utilizados nos testes com o algoritmo guloso randomizado, a faixa de valores de $\alpha$ e o tamanho do bloco de atualização das probabilidades adotados no algoritmo guloso randomizado reativo etc. 
+
+\subsection{Resultados obtidos}
+\label{subSecResultados}
+
+Apresente aqui os resultados quanto à qualidade (valor da função de otimização). Explique o significado das colunas da tabela. Lembre-se de pôr em negrito os valores associados aos melhores resultados para cada instância. A Tabela \ref{tabResultExemplo} é um exemplo de apresentação dos resultados.
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados comparativos da melhor solução alcançada por cada algoritmo — diferença percentual em relação à melhor solução conhecida}
+\renewcommand{\arraystretch}{1.2}
+{
+\footnotesize
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instância} & \textbf{Melhor} & \textbf{Literatura} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{5-7}
+ & & & &  \multicolumn{1}{c|}{{\bf 0,10}} & \multicolumn{1}{c|}{{\bf 0,30}} & \multicolumn{1}{c|}{{\bf 0,50}} & \\
+\hline
+I1 & 100 & \textbf{0,00} & 0,20 & 0,07 &  0,12 & \textbf{0,00} & 0,01 \\
+I2 & 184 & 0,12 & \textbf{0,00} & 0,21 & 0,28 & 0,20 & \textbf{0,00} \\
+\vdots & \vdots & \vdots & \vdots  & \vdots & \vdots & \vdots & \vdots \\
+I10 &  &  &  &  &  &  &  \\
+\hline
+\textbf{Média} &  &  &  &  &  &  &  \\
+\hline
+\end{tabular}
+}
+\label{tabResultExemplo}
+\end{table}
+
+Segue um exemplo superficial de análise de resultados a partir de uma tabela:
+
+Analisando a Tabela \ref{tabResultExemplo} é possível verificar que os resultados quanto à qualidade da solução apresentados pelo algoritmo proposto em sua fase de construção são melhores que aqueles obtidos pelo algoritmo da literatura. Isto vem a confirmar a hipótese de que o processo realizado pelo algoritmo através da identificação das componentes conexas do grafo, de fato, impacta na qualidade da alocação de canais com menor interferência.
+
+[\textit{Outro exemplo}] A Tabela \ref{tabResultExemplo} mostra que, em relação à qualidade da solução, os algoritmos propostos não foram capazes de alcançar os resultados da literatura. Entretanto, comparando-se os resultados obtidos pelos algoritmos implementados, é possível perceber que o algoritmo Randomizado Reativo obteve um desempenho superior em 90\% das instâncias, especialmente nas instâncias compostas por grafos densos (observe que para imprimir \% é necessário usar uma barra invertida antes).
+
+\colorbox{pink}{
+\begin{minipage}[c]{13cm}
+[\textbf{Nota}:] Nesta seção você precisa descrever os resultados, não apenas apresentar as tabelas. Procure destacar quais os melhores algoritmos, destacar se há alguma característica de uma ou mais instâncias (tamanho da instância, densidade de arestas ou grupo de instância específico) que esteja influenciando o comportamento de um ou outro algoritmo etc. 
+\end{minipage} }
+
+Além da Tabela \ref{tabResultExemplo} (que deve apresentar o desvio percentual dos melhores resultados alcançados por cada algoritmo), uma tabela semelhante deve ser utilizada para apresentar o desvio percentual da média dos resultados alcançados por cada algoritmo. Isso é, na Tabela \ref{tabResultExemplo}, o valor da melhor solução alcançada é utilizado para calcular os desvios e, na Tabela \ref{tabResultExemplo2}, a média do valor da solução obtido nas 10 execuções do algoritmo deve ser utilizada nos cálculos do desvio percentual.
+
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados comparativos da média das soluções alcançadas nas 10 execuções de cada algoritmo — diferença percentual em relação à melhor solução conhecida}
+\renewcommand{\arraystretch}{1.2}
+{
+\footnotesize
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instância} & \textbf{Melhor} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{4-6}
+ & & &  \multicolumn{1}{c|}{{\bf 0,10}} & \multicolumn{1}{c|}{{\bf 0,30}} & \multicolumn{1}{c|}{{\bf 0,50}} & \\
+\hline
+I1 & 100 & 0,20 & 0,07 &  0,12 & \textbf{0,00} & 0,01 \\
+I2 & 184 & \textbf{0,00} & 0,21 &  0,28 & 0,20 & \textbf{0,00} \\
+\vdots & \vdots & \vdots &  \vdots & \vdots & \vdots & \vdots \\
+I10 &  &  &  &  &  &  \\
+\hline
+\textbf{Média} &  &  &  &  &  &  \\
+\hline
+\end{tabular}
+}
+\label{tabResultExemplo2}
+\end{table}
+
+
+A Tabela \ref{tabResultExemplo} e a Tabela \ref{tabResultExemplo2} são semelhantes, mas a Tabela \ref{tabResultExemplo} contém a coluna \textbf{Literatura}, que foi omitida na  Tabela \ref{tabResultExemplo2}. Utilize apenas a primeira, caso contenha resultados de algum trabalho da literatura para o seu problema. Caso não tenha resultados da literatura, utilize apenas o modelo da  Tabela \ref{tabResultExemplo2}.
+
+Inclua ainda uma outra tabela com os dados  referentes ao tempo de processamento dos algoritmos. 
+
+
+\begin{table}[htbp]
+\centering
+\caption{Tempo médio de execução de cada algoritmo (em seg)}
+\renewcommand{\arraystretch}{1.2}
+{
+\footnotesize
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Instância} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{3-5}
+ & &  \multicolumn{1}{c|}{{\bf 0,10}} & \multicolumn{1}{c|}{{\bf 0,30}} & \multicolumn{1}{c|}{{\bf 0,50}} & \\
+\hline
+I1 & 0,20 & 0,07 &  0,12 & 0,19 & 0,52 \\
+I1 & 0,27 & 0,09 &  0,18 & 0,25 & 1,49 \\
+\vdots &  \vdots & \vdots & \vdots & \vdots &  \vdots \\
+I10 &  &  &  &  &  \\
+\hline
+\textbf{Média} &  &  &  &  &  \\
+\hline
+\end{tabular}
+}
+\label{tabResultTempo}
+\end{table}
+
+Lembre-se que é necessário analisar os dados de cada uma das tabelas!
+
+%=======================================================
+%                 C O N C L U S Õ E S
+%=======================================================
+\section{Conclusões}
+\label{secConclusoes}
+
+Apresente aqui as conclusões do trabalho. Comece descrevendo um resumo sucinto do que consistiu o trabalho, o problema modelado em grafos, o que foi implementado. Se tiver sugestões de melhorias para os algoritmos propostos, apresente aqui. Apresente também as principais dificuldades encontradas durante a realização do trabalho 2.
+
+
+
+%=======================================================
+%             R E F E R Ê N C I A S
+%=======================================================
+% Incluindo referências bibliográficas
+% ATENCAO: as referências incluidas no arquivo bibliografia.bib só aparecem no documento quando efetivamente citadas no texto.
+\bibliographystyle{plain} %define o estilo    
+\bibliography{bibliografia} %busca o arquivo
+
+
+\end{document}
