@@ -89,32 +89,6 @@ Função objetivo:
 min ~Z ~= \sum_{j=1}^{T} \sum_{i=1}^{H} C(Pot_{ij})\times x_{ij}   & & \label{func_obj}
 \end{eqnarray}
 
-Onde o custo de produção é dado por:
-\begin{eqnarray}
-C(Pot_{ij}) = a\times (Pot_{ij})^2+b\times Pot_{ij}+c
-\end{eqnarray}
-
-sujeito a:
-
-\begin{eqnarray}
-%Os limites de geração para a usina
-x_{ij} \times p_{i}  \leq ~~Pot_{ij} ~~\leq ~~ x_{ij} ~~\times ~~P_{i} ~~,  ~~\forall  i \in V=\{1,...,H\},~~\forall ~~ j\in W=\{1,...,T\} \label{restr_3}
-\end{eqnarray}
-%
-\begin{eqnarray}
-%Balanço de energia produzida
-\sum_{j=1}^{T} \sum_{i=1}^{H} (Pot_{ij}\times x_{ij}) - D_{j} = 0 , ~~ \forall  i\in V=\{1,...,H\},~~\forall  j\in W=\{1,...,T\}  \label{restr_4}
-\end{eqnarray}
-%Exigência de reserva do sistema
-\begin{eqnarray}
-\sum_{j=1}^{T} \sum_{i=1}^{H} (P_{ij}\times x_{ij}) \geq D_{j}+V_{j} ,  ~~\forall ~~ i\in V=\{1,...,H\},~~\forall ~~ j\in W=\{1,...,T\}  \label{restr_5}
-\end{eqnarray}
-
-
-A função objetivo (\ref{func_obj})   minimiza o custo total da geração de energia.  As restrições (\ref{restr_3}) se referem aos limites de geração da usina e limitarão qual o mínimo e o máximo que cada usina geradora $i$ pode alcançar.As restrições (\ref{restr_4}) garantem o balanceamento de energia produzida, pela qual a usina irá gerar energia de acordo com a demanda da mesma. As restrições (\ref{restr_5}) satisfazem as exigências de reserva do sistema, visando o armazenamento necessário para cada período. 
-
-\textbf{Observação:} estas equações são apenas um exemplo. Você não precisa descrever o problema na forma de Programação Matemática, mas é essencial que o problema seja descrito formalmente através de  modelagem em grafos.
-
 A Figura \ref{fig:cmst-exemplo} ilustra um exemplo do problema CMST. O grafo completo possui 6 vértices, onde o vértice 0 é a raiz. Cada aresta possui um custo associado e cada vértice possui uma demanda (assumida como 1 neste exemplo). A capacidade máxima \( Q = 3 \) limita a demanda de cada subárvore conectada à raiz. A solução apresentada mostra uma árvore geradora onde as subárvores conectadas à raiz respeitam a restrição de capacidade.
 
 \begin{figure}[h]
@@ -149,44 +123,6 @@ A Figura \ref{fig:cmst-exemplo} ilustra um exemplo do problema CMST. O grafo com
     \caption{Exemplo de solução CMST com \( Q = 3 \). A raiz (vértice 0) possui duas subárvores conectadas, cada uma respeitando a capacidade máxima.}
     \label{fig:cmst-exemplo}
 \end{figure}
-
-\begin{figure}[ht!]
-  \label{fig:acima}
-  \centering
-  
-  \begin{subfigure}{0.95\textwidth}
-    \centering
-    \input{img/grafo1}
-    \caption{Instância desenhada no arquivo grafo1 }
-    \label{fig:grafo1}
-  \end{subfigure}
-  
-\vspace{1cm} % espaço vertical de 1cm entre figura de cima e as de baixo
-  \begin{subfigure}{0.45\textwidth}
-    \centering
-    % use resizebox se precisar reduzir ou aumentar uma figura
-    \resizebox{0.9\textwidth}{!}{ 
-    \input{img/grafo2}
-    }
-    \caption{Solução do arquivo grafo2}
-    \label{fig:grafo2}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}{0.45\textwidth}
-    \centering
-    % use resizebox se precisar reduzir ou aumentar uma figura
-    \resizebox{0.9\textwidth}{!}{
-    \input{img/grafo3}
-    }
-    \caption{Outra solução do arquivo grafo3}
-    \label{fig:grafo2-ladoalado}
-  \end{subfigure}
-  
-  \caption{Exemplo do problema XXX }
-\end{figure}
-
-Os exemplos de grafos incluídos nos arquivos têm estilos diferentes para ilustrar diferentes possibilidades, caso queiram utilizar esse recurso. Outros exemplos de grafos podem ser encontrados em \href{https://tikz.net}{Tikz.net} ou em \href{https://texample.net}{TeXample.net}.
-
 
 
 %=======================================================
@@ -309,17 +245,6 @@ Inicializar melhor custo por \( \alpha \): \( \text{melhor}[\alpha] = \infty \)\
 
 A adaptação reativa permite que o algoritmo descubra automaticamente quais valores de \( \alpha \) são mais eficazes para cada instância, eliminando a necessidade de ajuste manual de parâmetros e melhorando o desempenho geral.
 
-\begin{figure}[ht]
-\centering
-\resizebox{0.5\textwidth}{!}{
-    \input{img/diagramaFluxo}
-}
-\caption{Exemplo imagem}
-\label{fig:fluxograma}
-\end{figure}
-
-\textbf{Além do} pseudocódigo, você também pode acrescentar uma figura com um fluxograma, como na Figura \ref{fig:fluxograma}.
-
 
 
 
@@ -342,27 +267,6 @@ As instâncias utilizadas neste trabalho foram obtidas da OR-Library, um reposit
 \end{itemize}
 
 As instâncias TC4001 a TC40010 e TE4001 a TE40010 possuem 40 vértices cada, enquanto as instâncias menores variam de 80 a 160 vértices. Todas as instâncias possuem soluções ótimas conhecidas (quando disponíveis), permitindo a avaliação do desvio percentual dos algoritmos em relação ao ótimo.
-
-\begin{table}[!h]
-\centering
-\caption{Exemplo de tabela com descrição das instâncias}
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\multicolumn{1}{|c|}{\textbf{Instância}} & \multicolumn{1}{c|}{\textbf{Núm Arestas}} & \multicolumn{1}{c|}{\textbf{Núm Vértices}} & \multicolumn{1}{c|}{\textbf{$K$}} & \multicolumn{1}{c|}{\textbf{$L$}}  \\ \hline
-st323\_70a & 323 & 70 & 14 & 9   \\ \hline
-proB789\_100a & 789 & 100 & 20 & 10  \\ \hline
-lin884\_318 & 884 & 118 & 64 & 10   \\ \hline \hline
-pcb2208\_442 & 2.208  & 442 & 89 & 10  \\ \hline
-pr5314 & 5.314 & 439 & 88 & 10  \\ \hline
-wath4180 & 4.180 & 699 & 20 & 25\\ \hline
-lin41817\_710 & 41.817 & 710 & 21 & 25  \\ \hline \hline
-kro121002 & 121.002 & 1.000 & 120 & 25  \\ \hline
-dilc & 91.217 & 2.620 & 153 & 250  \\ \hline
-pro789\_100a & 117.890 & 3.200 & 200 & 107  \\ \hline
-\end{tabular}
-\label{tabInstancias}
-\end{table}
-
 
 \subsection{Ambiente computacional e parâmetros}
 \label{subSecAmbiente}
@@ -441,14 +345,6 @@ A Tabela \ref{tabResultMedia} mostra que, considerando a média das execuções,
 
 A Tabela \ref{tabResultTempo} evidencia a diferença significativa de tempo de execução entre os algoritmos. O algoritmo Guloso é extremamente rápido (média de 0,000095 segundos), enquanto o algoritmo Reativo é aproximadamente 1900 vezes mais lento (média de 0,180 segundos) devido ao maior número de iterações (300 vs. 1). Os algoritmos Randomizados apresentam tempos intermediários (média de 0,009 segundos), sendo aproximadamente 95 vezes mais lentos que o Guloso, mas 20 vezes mais rápidos que o Reativo.
 
-\colorbox{pink}{
-\begin{minipage}[c]{13cm}
-[\textbf{Nota}:] Nesta seção você precisa descrever os resultados, não apenas apresentar as tabelas. Procure destacar quais os melhores algoritmos, destacar se há alguma característica de uma ou mais instâncias (tamanho da instância, densidade de arestas ou grupo de instância específico) que esteja influenciando o comportamento de um ou outro algoritmo etc. 
-\end{minipage} }
-
-Além da Tabela \ref{tabResultExemplo} (que deve apresentar o desvio percentual dos melhores resultados alcançados por cada algoritmo), uma tabela semelhante deve ser utilizada para apresentar o desvio percentual da média dos resultados alcançados por cada algoritmo. Isso é, na Tabela \ref{tabResultExemplo}, o valor da melhor solução alcançada é utilizado para calcular os desvios e, na Tabela \ref{tabResultExemplo2}, a média do valor da solução obtido nas 10 execuções do algoritmo deve ser utilizada nos cálculos do desvio percentual.
-
-
 \begin{table}[htbp]
 \centering
 \caption{Resultados comparativos da média das soluções alcançadas — diferença percentual em relação à solução ótima conhecida}
@@ -488,11 +384,6 @@ TE4010 & 782 & 3,96 & -1,80 & -1,07 & 0,59 & \textbf{-5,42} \\
 }
 \label{tabResultMedia}
 \end{table}
-
-
-A Tabela \ref{tabResultExemplo} e a Tabela \ref{tabResultExemplo2} são semelhantes, mas a Tabela \ref{tabResultExemplo} contém a coluna \textbf{Literatura}, que foi omitida na  Tabela \ref{tabResultExemplo2}. Utilize apenas a primeira, caso contenha resultados de algum trabalho da literatura para o seu problema. Caso não tenha resultados da literatura, utilize apenas o modelo da  Tabela \ref{tabResultExemplo2}.
-
-Inclua ainda uma outra tabela com os dados  referentes ao tempo de processamento dos algoritmos. 
 
 
 \begin{table}[htbp]
@@ -535,7 +426,7 @@ TE4010 & 0,000094 & 0,008924 & 0,009252 & 0,009249 & 0,181386 \\
 \label{tabResultTempo}
 \end{table}
 
-Lembre-se que é necessário analisar os dados de cada uma das tabelas!
+
 
 %=======================================================
 %                 C O N C L U S Õ E S
