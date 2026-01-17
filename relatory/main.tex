@@ -27,7 +27,7 @@
 
 
 %=======================================================
-%  INDIQUE AQUI O NOME DO PROBLEMA E A EQUIPE 
+%  TÍTULO E AUTORES
 %=======================================================
 \title{Universidade Federal de Juiz de Fora \\
         DCC059 - Teoria dos Grafos \\
@@ -84,10 +84,26 @@ O objetivo é encontrar uma árvore geradora \( T = (V, E_T) \), onde \( E_T \su
 
 O problema pode ser formulado como:
 
-Função objetivo:
+\textbf{Função objetivo:}
 \begin{eqnarray}
-min ~Z ~= \sum_{j=1}^{T} \sum_{i=1}^{H} C(Pot_{ij})\times x_{ij}   & & \label{func_obj}
+\min ~Z = \sum_{(i,j) \in E_T} c_{ij} \label{func_obj}
 \end{eqnarray}
+
+\textbf{Sujeito a:}
+
+\begin{eqnarray}
+T \text{ é uma árvore geradora de } G \label{restr_1}
+\end{eqnarray}
+
+\begin{eqnarray}
+\sum_{v \in S_k} d_v \leq Q, ~~ \forall k \in \{1, 2, \ldots, K\} \label{restr_2}
+\end{eqnarray}
+
+onde \( S_k \) representa a \( k \)-ésima subárvore conectada diretamente à raiz e \( K \) é o número de subárvores.
+
+A função objetivo (\ref{func_obj}) minimiza o custo total das arestas da árvore geradora. A restrição (\ref{restr_1}) garante que a solução seja uma árvore geradora válida, conectando todos os vértices sem formar ciclos. A restrição (\ref{restr_2}) assegura que a demanda total de cada subárvore conectada à raiz não exceda a capacidade \( Q \).
+
+O problema CMST é NP-difícil, pois generaliza o problema da MST (quando \( Q \geq \sum_{v \in V} d_v \)) e incorpora restrições de capacidade que tornam a busca por soluções ótimas computacionalmente inviável para instâncias grandes. Portanto, algoritmos heurísticos são necessários para obter soluções de boa qualidade em tempo razoável.
 
 A Figura \ref{fig:cmst-exemplo} ilustra um exemplo do problema CMST. O grafo completo possui 6 vértices, onde o vértice 0 é a raiz. Cada aresta possui um custo associado e cada vértice possui uma demanda (assumida como 1 neste exemplo). A capacidade máxima \( Q = 3 \) limita a demanda de cada subárvore conectada à raiz. A solução apresentada mostra uma árvore geradora onde as subárvores conectadas à raiz respeitam a restrição de capacidade.
 
@@ -131,8 +147,8 @@ A Figura \ref{fig:cmst-exemplo} ilustra um exemplo do problema CMST. O grafo com
 \section{Algoritmos Implementados}
 \label{secAlgoritmos}
 
-Nesta seção são detalhados os algoritmos propostos para a obtenção de soluções para o problema xyz.
-É importante que os algoritmos sejam apresentados de forma detalhada, de forma que seja possível que qualquer pessoa consiga reproduzir os algoritmos propostos. 
+Nesta seção são detalhados os algoritmos propostos para a obtenção de soluções para o problema CMST.
+Os algoritmos são apresentados de forma detalhada, de forma que seja possível que qualquer pessoa consiga reproduzir os algoritmos propostos. 
 
 \subsection{Algoritmo Guloso}
 \label{subSecAlgGuloso}
@@ -254,7 +270,7 @@ A adaptação reativa permite que o algoritmo descubra automaticamente quais val
 \label{secExperimentos}
 \section{Experimentos computacionais}
 \label{secResultados}
-Nesta seção você deve descrever todo o experimento computacional. Para tanto, defina subseções.
+Nesta seção são apresentados os experimentos computacionais realizados para avaliar o desempenho dos algoritmos propostos.
 
 \subsection{Descrição das instâncias}
 \label{subSecInstancias}
@@ -295,7 +311,7 @@ Cada algoritmo foi executado 10 vezes para as instâncias menores (para cálculo
 \subsection{Resultados obtidos}
 \label{subSecResultados}
 
-Apresente aqui os resultados quanto à qualidade (valor da função de otimização). Explique o significado das colunas da tabela. Lembre-se de pôr em negrito os valores associados aos melhores resultados para cada instância. A Tabela \ref{tabResultExemplo} é um exemplo de apresentação dos resultados.
+A seguir são apresentados os resultados obtidos pelos algoritmos implementados. As tabelas mostram o desvio percentual em relação à solução ótima conhecida, onde valores negativos indicam soluções melhores que o ótimo reportado na literatura. Os melhores resultados para cada instância estão destacados em negrito.
 
 \begin{table}[htbp]
 \centering
@@ -337,13 +353,30 @@ TE4010 & 782 & 3,96 & -3,96 & -2,69 & -3,07 & \textbf{-7,16} \\
 \label{tabResultMelhor}
 \end{table}
 
-Analisando a Tabela \ref{tabResultMelhor}, é possível verificar que o algoritmo Reativo obteve os melhores resultados na maioria das instâncias, apresentando desvio médio de 15,50\% em relação ao ótimo, seguido pelos algoritmos Randomizados com desvios médios entre 19,11\% e 19,48\%. O algoritmo Guloso apresentou o pior desempenho, com desvio médio de 38,18\%, confirmando que a introdução de aleatoriedade e adaptação melhoram significativamente a qualidade das soluções.
+Analisando a Tabela \ref{tabResultMelhor}, que apresenta os melhores resultados alcançados por cada algoritmo, observa-se que o algoritmo Reativo obteve os melhores resultados em 17 das 20 instâncias testadas, apresentando desvio médio de 15,50\% em relação ao ótimo. O melhor resultado individual foi alcançado na instância TC4009, onde o Reativo obteve apenas 7,20\% de desvio, seguido por TC4003 com 11,84\% e TC4004 com 13,30\%. 
 
-Observa-se que para algumas instâncias do grupo TE (TE4001, TE4007, TE4008, TE4010), os algoritmos Randomizado e Reativo conseguiram encontrar soluções melhores que o ótimo conhecido, o que pode indicar que os valores ótimos reportados na literatura não são verdadeiramente ótimos ou que os algoritmos exploraram regiões do espaço de soluções não consideradas anteriormente.
+Os algoritmos Randomizados apresentaram desempenho similar entre si, com desvios médios entre 19,11\% e 19,48\%. O melhor resultado entre os Randomizados foi alcançado pelo algoritmo com \( \alpha = 0,04 \) na instância TC4009 (11,95\% de desvio), seguido por \( \alpha = 0,05 \) na instância TC4001 (16,92\%). O algoritmo com \( \alpha = 0,03 \) obteve o melhor resultado individual na instância TE4001, encontrando uma solução 2,82\% melhor que o ótimo reportado.
 
-A Tabela \ref{tabResultMedia} mostra que, considerando a média das execuções, o algoritmo Reativo mantém superioridade com desvio médio de 18,02\%, enquanto os algoritmos Randomizados apresentam desvios médios entre 22,19\% e 23,12\%. O algoritmo Guloso mantém o pior desempenho com 38,18\% de desvio médio.
+O algoritmo Guloso apresentou o pior desempenho geral, com desvio médio de 38,18\%. Seus piores resultados foram nas instâncias TC4008 (59,75\%), TC4002 (58,67\%) e TE4004 (69,33\%), todas com custos aleatórios. O melhor resultado do Guloso foi na instância TE4010 (3,96\% de desvio), seguido por TE4007 (5,44\%) e TE4008 (7,56\%), todas do grupo TE com custos euclidianos.
 
-A Tabela \ref{tabResultTempo} evidencia a diferença significativa de tempo de execução entre os algoritmos. O algoritmo Guloso é extremamente rápido (média de 0,000095 segundos), enquanto o algoritmo Reativo é aproximadamente 1900 vezes mais lento (média de 0,180 segundos) devido ao maior número de iterações (300 vs. 1). Os algoritmos Randomizados apresentam tempos intermediários (média de 0,009 segundos), sendo aproximadamente 95 vezes mais lentos que o Guloso, mas 20 vezes mais rápidos que o Reativo.
+Observa-se que para algumas instâncias do grupo TE (TE4001, TE4007, TE4008, TE4010), os algoritmos Randomizado e Reativo conseguiram encontrar soluções melhores que o ótimo conhecido, com desvios negativos. Isso pode indicar que os valores ótimos reportados na literatura não são verdadeiramente ótimos ou que os algoritmos exploraram regiões do espaço de soluções não consideradas anteriormente. O melhor resultado absoluto foi alcançado pelo algoritmo Reativo na instância TE4007, com desvio de -12,09\%.
+
+Quanto à estrutura das instâncias, observa-se que:
+\begin{itemize}
+    \item \textbf{Instâncias TE (euclidianas)}: Os algoritmos apresentam melhor desempenho relativo nas instâncias com custos euclidianos, especialmente o algoritmo Guloso, que obtém resultados significativamente melhores neste grupo. Isso sugere que a estrutura geométrica dos custos euclidianos facilita a construção de soluções de boa qualidade mesmo com estratégias determinísticas.
+    \item \textbf{Instâncias TC (aleatórias)}: As instâncias com custos aleatórios são mais desafiadoras, especialmente para o algoritmo Guloso, que apresenta desvios muito maiores neste grupo. Os algoritmos Randomizado e Reativo conseguem explorar melhor o espaço de soluções nestas instâncias, obtendo resultados mais consistentes.
+    \item \textbf{Melhor desempenho do Reativo}: O algoritmo Reativo se destaca especialmente em instâncias difíceis como TC4005, TC4008 e TE4004, onde a adaptação automática do parâmetro \( \alpha \) permite encontrar soluções significativamente melhores que os outros algoritmos.
+\end{itemize}
+
+A Tabela \ref{tabResultMedia} mostra que, considerando a média das execuções, o algoritmo Reativo mantém superioridade com desvio médio de 18,02\%, enquanto os algoritmos Randomizados apresentam desvios médios entre 22,19\% e 23,12\%. O algoritmo Guloso mantém o pior desempenho com 38,18\% de desvio médio. A diferença entre os melhores resultados e as médias indica que os algoritmos Randomizado e Reativo apresentam maior variabilidade, mas também maior potencial de encontrar soluções excepcionais através de múltiplas execuções.
+
+A Tabela \ref{tabResultTempo} evidencia a diferença significativa de tempo de execução entre os algoritmos. O algoritmo Guloso é extremamente rápido, com tempo médio de 0,000095 segundos (aproximadamente 0,1 milissegundos), sendo o mais eficiente computacionalmente. O tempo de execução do Guloso varia pouco entre instâncias, mantendo-se sempre abaixo de 0,0002 segundos.
+
+Os algoritmos Randomizados apresentam tempos intermediários, com média de aproximadamente 0,009 segundos (9 milissegundos), sendo aproximadamente 95 vezes mais lentos que o Guloso. Entre os valores de \( \alpha \) testados, não há diferença significativa no tempo de execução, variando entre 0,0076 e 0,0135 segundos. O tempo mais longo foi observado na instância TC4009 (0,0124 segundos para \( \alpha = 0,03 \)), enquanto o mais rápido foi em TC4005 (0,0076 segundos para \( \alpha = 0,03 \)).
+
+O algoritmo Reativo é o mais lento, com tempo médio de 0,180 segundos (180 milissegundos), sendo aproximadamente 1900 vezes mais lento que o Guloso e 20 vezes mais lento que os Randomizados. Isso é esperado devido ao maior número de iterações (300 vs. 30). O tempo de execução do Reativo varia mais significativamente entre instâncias, com o menor tempo em TC4005 (0,153 segundos) e o maior em TC4009 (0,256 segundos) e TE4001 (0,237 segundos).
+
+Quanto à relação entre tempo e qualidade, observa-se que o aumento de tempo de execução está diretamente relacionado à melhoria na qualidade das soluções. O algoritmo Guloso, apesar de ser o mais rápido, produz soluções de qualidade significativamente inferior. Os algoritmos Randomizados oferecem um bom compromisso entre tempo e qualidade, melhorando substancialmente a qualidade com um aumento moderado no tempo. O algoritmo Reativo, apesar de ser o mais lento, oferece a melhor qualidade de solução, sendo recomendado quando a qualidade é mais importante que o tempo de execução.
 
 \begin{table}[htbp]
 \centering
@@ -385,7 +418,6 @@ TE4010 & 782 & 3,96 & -1,80 & -1,07 & 0,59 & \textbf{-5,42} \\
 \label{tabResultMedia}
 \end{table}
 
-
 \begin{table}[htbp]
 \centering
 \caption{Tempo médio de execução de cada algoritmo (em segundos)}
@@ -426,8 +458,6 @@ TE4010 & 0,000094 & 0,008924 & 0,009252 & 0,009249 & 0,181386 \\
 \label{tabResultTempo}
 \end{table}
 
-
-
 %=======================================================
 %                 C O N C L U S Õ E S
 %=======================================================
@@ -457,7 +487,6 @@ Os experimentos computacionais foram realizados sobre instâncias da OR-Library,
 %             R E F E R Ê N C I A S
 %=======================================================
 % Incluindo referências bibliográficas
-% ATENCAO: as referências incluidas no arquivo bibliografia.bib só aparecem no documento quando efetivamente citadas no texto.
 \bibliographystyle{plain} %define o estilo    
 \bibliography{bibliografia} %busca o arquivo
 

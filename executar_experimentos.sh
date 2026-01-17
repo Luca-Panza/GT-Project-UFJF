@@ -33,8 +33,8 @@ executar_randomizado() {
     local instancia=$1
     local execucao=$2
     local seed=$3
-    local alpha=0.3
-    local iter=30
+    local alpha=$4
+    local iter=100
     
     echo "  [Randomizado] Execução $execucao/10 - Instância: $instancia - Seed: $seed"
     ./cmst "$instancia" randomizado --alpha $alpha --iter $iter --seed $seed
@@ -45,8 +45,8 @@ executar_reativo() {
     local instancia=$1
     local execucao=$2
     local seed=$3
-    local alphas="0.1,0.3,0.5"
-    local iter=500
+    local alphas="0.03,0.04,0.05"
+    local iter=2000
     local bloco=50
     
     echo "  [Reativo] Execução $execucao/10 - Instância: $instancia - Seed: $seed"
@@ -80,10 +80,26 @@ for instancia in "$INSTANCIAS_DIR"/*.dat "$INSTANCIAS_DIR"/*.DAT; do
     
     # Executar algoritmo randomizado 10 vezes com seeds diferentes
     echo ""
-    echo ">>> Algoritmo Randomizado (10 execuções, --iter 30)"
+    echo ">>> Algoritmo Randomizado (10 execuções, alpha = 0.03 --iter 50)"
     for execucao in {1..10}; do
         seed=$((1000 + execucao))  # Seeds de 1001 a 1010
-        executar_randomizado "$instancia" $execucao $seed
+        executar_randomizado "$instancia" $execucao $seed 0.03
+    done
+
+    # Executar algoritmo randomizado 10 vezes com seeds diferentes
+    echo ""
+    echo ">>> Algoritmo Randomizado (10 execuções, alpha = 0.04 --iter 50)"
+    for execucao in {1..10}; do
+        seed=$((1000 + execucao))  # Seeds de 1001 a 1010
+        executar_randomizado "$instancia" $execucao $seed 0.04
+    done
+
+    # Executar algoritmo randomizado 10 vezes com seeds diferentes
+    echo ""
+    echo ">>> Algoritmo Randomizado (10 execuções, alpha = 0.05 --iter 50)"
+    for execucao in {1..10}; do
+        seed=$((1000 + execucao))  # Seeds de 1001 a 1010
+        executar_randomizado "$instancia" $execucao $seed 0.05
     done
     
     # Executar algoritmo reativo 10 vezes com seeds diferentes

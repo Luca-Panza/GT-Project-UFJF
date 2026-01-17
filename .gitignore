@@ -2,9 +2,6 @@
 build/
 cmst
 
-# Resultados de execução
-resultados.csv
-
 # Arquivos de editor/IDE
 *.swp
 *.swo
