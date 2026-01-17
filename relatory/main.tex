@@ -32,8 +32,8 @@
 \title{Universidade Federal de Juiz de Fora \\
         DCC059 - Teoria dos Grafos \\
         \vspace{6.0cm}
-        {\Huge\textbf{Nome do Problema \\
-                      Abordado}}\\
+        {\Huge\textbf{Árvore Geradora Mínima \\
+                      com Restrição de Capacidade (CMST)}}\\
         \vspace{6.0cm}
 }
 \author{
@@ -62,9 +62,11 @@
 %                 I N T R O D U Ç Ã O
 %=======================================================
 \section{Introdução}
-O presente relatório tem como objetivo $\dots$. Considerou-se neste trabalho as características do problema  $\dots$. Foram desenvolvidos três algoritmos construtivos:  um algoritmo gulosos, um randomizados e um reativo, que foram avaliados sobre um conjunto de instâncias e os resultados foram comparados com os apresentados em citar.
+O presente relatório tem como objetivo apresentar a implementação e avaliação de algoritmos heurísticos para o problema da Árvore Geradora Mínima com Restrição de Capacidade (CMST - \textit{Capacitated Minimum Spanning Tree}). Este problema é uma variante do clássico problema da Árvore Geradora Mínima (MST) que incorpora restrições de capacidade, tornando-o mais desafiador e relevante para aplicações práticas em redes de comunicação, distribuição e logística.
 
-Note que nesta seção você deve dar uma visão geral do que consiste o trabalho, podendo destacar o contexto do mesmo no escopo da disciplina de Grafos, os objetivos e a motivação para o desenvolvimento do mesmo. O último parágrafo segue mais ou menos o modelo a seguir.
+O problema CMST consiste em encontrar uma árvore geradora de custo mínimo em um grafo completo, onde cada vértice possui uma demanda associada e existe um limite de capacidade para cada subárvore conectada diretamente à raiz. Esta restrição adicional torna o problema NP-difícil, exigindo o desenvolvimento de algoritmos heurísticos eficientes para a obtenção de soluções de boa qualidade em tempo computacional viável.
+
+Considerou-se neste trabalho as características do problema CMST, incluindo a representação da solução como uma árvore enraizada, o gerenciamento de subárvores e a validação de restrições de capacidade. Foram desenvolvidos três algoritmos construtivos: um algoritmo guloso determinístico, um algoritmo guloso randomizado e um algoritmo guloso randomizado reativo, que foram avaliados sobre um conjunto de instâncias da OR-Library e os resultados foram comparados com as soluções ótimas conhecidas quando disponíveis.
 
 O restante do trabalho está assim estruturado: na Seção \ref{secProblema} o problema é descrito formalmente através de um modelo em grafos; a Seção \ref{secAlgoritmos} descreve as abordagens propostas para o problema, enquanto a Seção \ref{secResultados} apresenta os experimentos computacionais, onde se descreve o design dos experimentos, o conjunto de instâncias (\textit{benchmarks}), bem como se apresenta a análise comparativa dos resultados dos algoritmos desenvolvidos e a literatura; por fim, a Seção \ref{secConclusoes} traz as conclusões do trabalho e propostas de trabalhos futuros.
 
@@ -76,11 +78,11 @@ O restante do trabalho está assim estruturado: na Seção \ref{secProblema} o p
 \section{Descrição do Problema}
 \label{secProblema}
 
-Dado um grafo \( G = (V, E) \), um conjunto \( D \subseteq V \) é um ... conforme descrito em \cite{tumuluru2014unit}.
+O problema da Árvore Geradora Mínima com Restrição de Capacidade (CMST) pode ser formalmente descrito da seguinte forma. Dado um grafo completo não direcionado \( G = (V, E) \), onde \( V = \{0, 1, 2, \ldots, n-1\} \) é o conjunto de vértices e \( E \) é o conjunto de arestas, cada aresta \( (i, j) \in E \) possui um custo \( c_{ij} \geq 0 \). O vértice \( 0 \) é designado como raiz da árvore. Cada vértice \( i \in V \) possui uma demanda \( d_i \geq 0 \) (por padrão, \( d_i = 1 \) para todos os vértices). Existe uma capacidade máxima \( Q > 0 \) que limita a demanda total de cada subárvore conectada diretamente à raiz.
 
-Nesta seção você deve descrever formalmente o problema modelado em grafos. Caso sejam usadas equações para isso, seguem alguns exemplos:
+O objetivo é encontrar uma árvore geradora \( T = (V, E_T) \), onde \( E_T \subseteq E \), que minimize o custo total das arestas, sujeito à restrição de que a demanda total de cada subárvore conectada diretamente à raiz não exceda a capacidade \( Q \).
 
-$\dots$ o problema  pode ser formulado por:
+O problema pode ser formulado como:
 
 Função objetivo:
 \begin{eqnarray}
@@ -113,17 +115,40 @@ A função objetivo (\ref{func_obj})   minimiza o custo total da geração de en
 
 \textbf{Observação:} estas equações são apenas um exemplo. Você não precisa descrever o problema na forma de Programação Matemática, mas é essencial que o problema seja descrito formalmente através de  modelagem em grafos.
 
-Ilustre sempre que possível e, sempre que inserir uma figura ou tabela, escreva algo que a explique. Como é possível observar na Figura \ref{fig:exemplo-imagem}, $\dots$.
-
+A Figura \ref{fig:cmst-exemplo} ilustra um exemplo do problema CMST. O grafo completo possui 6 vértices, onde o vértice 0 é a raiz. Cada aresta possui um custo associado e cada vértice possui uma demanda (assumida como 1 neste exemplo). A capacidade máxima \( Q = 3 \) limita a demanda de cada subárvore conectada à raiz. A solução apresentada mostra uma árvore geradora onde as subárvores conectadas à raiz respeitam a restrição de capacidade.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.3\textwidth]{img/Grafo-konigsberg.jpg} % substitua pelo nome do arquivo da sua imagem
-    \caption{Essa figura é um arquivo jpg  (Fonte: \cite{} - indique quem fez a figura)}
-    \label{fig:exemplo-imagem}
+    \begin{tikzpicture}[node distance=2cm, auto]
+        % Raiz
+        \node[circle, draw, fill=blue!20, minimum size=1cm] (0) at (0,0) {0};
+        
+        % Vértices
+        \node[circle, draw, minimum size=0.8cm] (1) at (2,2) {1};
+        \node[circle, draw, minimum size=0.8cm] (2) at (2,0) {2};
+        \node[circle, draw, minimum size=0.8cm] (3) at (2,-2) {3};
+        \node[circle, draw, minimum size=0.8cm] (4) at (4,1) {4};
+        \node[circle, draw, minimum size=0.8cm] (5) at (4,-1) {5};
+        
+        % Arestas da solução
+        \draw[thick, blue] (0) -- (1) node[midway, above] {5};
+        \draw[thick, blue] (0) -- (3) node[midway, below] {6};
+        \draw[thick, blue] (1) -- (2) node[midway, left] {3};
+        \draw[thick, blue] (1) -- (4) node[midway, above] {4};
+        \draw[thick, blue] (3) -- (5) node[midway, below] {5};
+        
+        % Legenda
+        \node at (6,0) {\begin{tabular}{l}
+            Subárvore 1: \{1,2,4\} \\
+            Demanda: 3 $\leq$ Q \\
+            Subárvore 2: \{3,5\} \\
+            Demanda: 2 $\leq$ Q \\
+            Custo total: 23
+        \end{tabular}};
+    \end{tikzpicture}
+    \caption{Exemplo de solução CMST com \( Q = 3 \). A raiz (vértice 0) possui duas subárvores conectadas, cada uma respeitando a capacidade máxima.}
+    \label{fig:cmst-exemplo}
 \end{figure}
-
-Se preferir, desenhe os grafos da instância e de uma solução para ilustrar melhor o problema.
 
 \begin{figure}[ht!]
   \label{fig:acima}
@@ -176,32 +201,113 @@ Nesta seção são detalhados os algoritmos propostos para a obtenção de solu�
 \subsection{Algoritmo Guloso}
 \label{subSecAlgGuloso}
 
-Descrever o algoritmo guloso, colocando também o pseudocódigo. Vide exemplo no Algoritmo \ref{algGuloso}. Lembre-se de descrever o algoritmo apresentado, a numeração das linhas pode ajudar nesta explicação. Os algoritmos não são autoexplicativos, você precisa direcionar o leitor na leitura do pseudocódigo.
+O algoritmo guloso proposto constrói a solução de forma incremental, conectando vértices um a um enquanto respeita as restrições de capacidade. A estratégia é sempre selecionar a aresta de menor custo entre os candidatos viáveis, garantindo uma escolha localmente ótima a cada iteração.
+
+O algoritmo inicia com apenas a raiz conectada (linha 2). Em cada iteração, gera uma lista de candidatos viáveis (linha 5), onde cada candidato representa uma aresta que pode ser adicionada respeitando a capacidade. Os candidatos são ordenados por custo crescente (linha 6) e o melhor candidato (menor custo) é selecionado (linha 7). O vértice é então conectado à solução e o cache de demandas é atualizado incrementalmente para otimizar a verificação de capacidade (linha 9). O processo continua até que todos os vértices sejam conectados.
+
+A otimização principal do algoritmo é o uso de um sistema de cache que mantém a demanda atual de cada subárvore, permitindo verificação de capacidade em O(1) em vez de O(n). Além disso, a pré-filtragem de vértices conectados e não conectados reduz a complexidade da geração de candidatos.
 
 \begin{algorithm}[H]
-\caption{Algoritmo Guloso}
+\caption{Algoritmo Guloso para CMST}
 \label{algGuloso}
-\KwIn{Grafo \( G = (V, E) \)}
-\KwOut{Conjunto ...)}
+\KwIn{Grafo completo \( G = (V, E) \), raiz \( r \), capacidade \( Q \), demandas \( d_v \)}
+\KwOut{Árvore geradora \( T \) com restrição de capacidade}
 
-\While{$V_{restante} \neq \emptyset$}{
-    Exemplo de Algoritmo\\
+Inicializar solução \( T \) apenas com raiz \( r \)\;
+Inicializar cache de demandas das subárvores\;
+Marcar raiz como conectada\;
+\While{existem vértices não conectados}{
+    Gerar lista \( C \) de candidatos viáveis (arestas que respeitam capacidade)\;
+    Ordenar \( C \) por custo crescente\;
+    Selecionar melhor candidato \( c \in C \) (menor custo)\;
+    Adicionar aresta de \( c \) à solução \( T \)\;
+    Atualizar cache de demandas incrementalmente\;
+    Marcar vértice como conectado\;
 }
-\Return{$D$}
+Calcular custo total da solução\;
+Validar viabilidade da solução\;
+\Return{\( T \)}
 \end{algorithm}
 
-Pode ser interessante destacar as limitações do algoritmo proposto, destacando os cenários onde é mais difícil para o algoritmo obter boas soluções. 
+\textbf{Limitações:} O algoritmo guloso pode ficar preso em ótimos locais, especialmente quando as escolhas iniciais de baixo custo impedem conexões mais eficientes posteriormente. Em instâncias com capacidade muito restritiva, o algoritmo pode ter dificuldade em encontrar soluções viáveis, necessitando de um mecanismo de fallback que força conexões com a raiz quando não há candidatos viáveis. 
 
 
 \subsection{Algoritmo Guloso Randomizado}
 \label{subSecAlgRand}
 
-Descrever o algoritmo guloso randomizado, justificar a proposta do mesmo sobre as limitações da abordagem gulosa descrita na seção anterior e colocar também o pseudocódigo.
+O algoritmo guloso randomizado foi desenvolvido para superar as limitações do algoritmo guloso puro, que pode ficar preso em ótimos locais devido à sua natureza determinística. A estratégia introduz aleatoriedade controlada através do parâmetro \( \alpha \in [0, 1] \), permitindo explorar diferentes regiões do espaço de soluções.
+
+O algoritmo utiliza uma Lista Restrita de Candidatos (LRC) baseada em cardinalidade. Após gerar e ordenar os candidatos por custo (linhas 5-6), calcula o tamanho da LRC como \( \lfloor \alpha \times |C| \rfloor \) (linha 7), onde \( |C| \) é o número total de candidatos. Os primeiros \( \text{tamanhoLRC} \) candidatos (de menor custo) compõem a LRC (linha 8), e um candidato é selecionado aleatoriamente desta lista (linha 9).
+
+O parâmetro \( \alpha \) controla o balanço entre qualidade e diversidade: \( \alpha = 0 \) resulta em comportamento puramente guloso (apenas o melhor candidato), enquanto \( \alpha = 1 \) permite seleção aleatória entre todos os candidatos. Valores intermediários proporcionam um equilíbrio entre exploração e exploração.
+
+O algoritmo executa múltiplas iterações (padrão: 30) e retorna a melhor solução encontrada, permitindo que diferentes execuções explorem diferentes trajetórias de construção.
+
+\begin{algorithm}[H]
+\caption{Algoritmo Guloso Randomizado para CMST}
+\label{algRandomizado}
+\KwIn{Grafo \( G \), raiz \( r \), capacidade \( Q \), parâmetro \( \alpha \in [0,1] \), número de iterações \( \text{iter} \)}
+\KwOut{Melhor árvore geradora \( T^* \) encontrada}
+
+\( T^* \leftarrow \emptyset \), \( \text{custo}^* \leftarrow \infty \)\;
+\For{\( i = 1 \) \textbf{to} \( \text{iter} \)}{
+    Inicializar solução \( T \) apenas com raiz \( r \)\;
+    Inicializar cache de demandas\;
+    \While{existem vértices não conectados}{
+        Gerar lista \( C \) de candidatos viáveis\;
+        Ordenar \( C \) por custo crescente\;
+        \( \text{tamanhoLRC} \leftarrow \max(1, \lfloor \alpha \times |C| \rfloor) \)\;
+        Construir LRC com os primeiros \( \text{tamanhoLRC} \) candidatos\;
+        Selecionar candidato \( c \) aleatoriamente da LRC\;
+        Adicionar aresta de \( c \) à solução \( T \)\;
+        Atualizar cache\;
+    }
+    \If{\( \text{custo}(T) < \text{custo}^* \)}{
+        \( T^* \leftarrow T \), \( \text{custo}^* \leftarrow \text{custo}(T) \)\;
+    }
+}
+\Return{\( T^* \)}
+\end{algorithm}
 
 
 \subsection{Algoritmo Guloso Randomizado Reativo}
 \label{subSecAlgRandReact}
-Descrever o algoritmo guloso randomizado reativo, justificar a proposta do mesmo sobre as limitações da abordagem gulosa randomizada descrita na seção anterior e colocar também o pseudocódigo.
+
+O algoritmo guloso randomizado reativo foi desenvolvido para superar a limitação do algoritmo randomizado, que requer a escolha manual do parâmetro \( \alpha \). A estratégia reativa adapta automaticamente as probabilidades de seleção de diferentes valores de \( \alpha \) com base no desempenho histórico de cada valor.
+
+O algoritmo mantém um conjunto de valores de \( \alpha \) (padrão: \{0.1, 0.3, 0.5\}) e inicializa probabilidades uniformes para cada um (linha 3). A cada iteração, seleciona um \( \alpha \) usando roleta probabilística baseada nas probabilidades atuais (linha 5) e constrói uma solução usando o algoritmo guloso randomizado com esse \( \alpha \) (linha 6). O algoritmo rastreia a melhor solução encontrada por cada \( \alpha \) e a melhor solução global (linhas 7-8).
+
+A cada \( \text{tamanhoBloco} \) iterações (padrão: 30), o algoritmo atualiza as probabilidades (linhas 9-15). Para cada \( \alpha \), calcula uma qualidade baseada na razão entre a melhor solução global e a melhor solução encontrada com aquele \( \alpha \), elevada a um fator de amplificação (padrão: 3) para enfatizar diferenças (linha 11). Valores de \( \alpha \) que produzem melhores soluções recebem maior qualidade. As qualidades são então normalizadas para formar novas probabilidades (linha 13), direcionando a busca para valores de \( \alpha \) mais promissores.
+
+\begin{algorithm}[H]
+\caption{Algoritmo Guloso Randomizado Reativo para CMST}
+\label{algReativo}
+\KwIn{Grafo \( G \), raiz \( r \), capacidade \( Q \), conjunto de \( \alpha \)'s \( A \), número de iterações \( \text{iter} \), tamanho do bloco \( \text{bloco} \)}
+\KwOut{Melhor árvore geradora \( T^* \) encontrada}
+
+Inicializar probabilidades \( p[\alpha] = 1/|A| \) para cada \( \alpha \in A \)\;
+Inicializar melhor custo por \( \alpha \): \( \text{melhor}[\alpha] = \infty \)\;
+\( \text{custo}^* \leftarrow \infty \)\;
+\For{\( i = 1 \) \textbf{to} \( \text{iter} \)}{
+    Selecionar \( \alpha \) usando roleta probabilística com probabilidades \( p \)\;
+    \( T \leftarrow \text{ConstruirGulosoRandomizado}(G, \alpha) \)\;
+    Atualizar \( \text{melhor}[\alpha] = \min(\text{melhor}[\alpha], \text{custo}(T)) \)\;
+    Atualizar \( \text{custo}^* = \min(\text{custo}^*, \text{custo}(T)) \)\;
+    \If{\( i \bmod \text{bloco} = 0 \)}{
+        \For{\( \alpha \in A \)}{
+            \If{\( \text{melhor}[\alpha] < \infty \)}{
+                \( \text{qualidade}[\alpha] \leftarrow (\text{custo}^* / \text{melhor}[\alpha])^3 \)\;
+            }\Else{
+                \( \text{qualidade}[\alpha] \leftarrow 0.1 \)\;
+            }
+        }
+        Normalizar qualidades para probabilidades: \( p[\alpha] = \text{qualidade}[\alpha] / \sum_{\beta \in A} \text{qualidade}[\beta] \)\;
+    }
+}
+\Return{\( T^* \)}
+\end{algorithm}
+
+A adaptação reativa permite que o algoritmo descubra automaticamente quais valores de \( \alpha \) são mais eficazes para cada instância, eliminando a necessidade de ajuste manual de parâmetros e melhorando o desempenho geral.
 
 \begin{figure}[ht]
 \centering
@@ -227,7 +333,15 @@ Nesta seção você deve descrever todo o experimento computacional. Para tanto,
 
 \subsection{Descrição das instâncias}
 \label{subSecInstancias}
-Descreva as instâncias citando a referência onde as mesmas foram obtidas, se você testou apenas um subconjunto de instâncias da referência, explique qual(is) o(s) critério(s) utilizado(s) para a seleção do conjunto de instâncias usadas. Você pode listar as instâncias em uma tabela como no exemplo da Tabela \ref{tabInstancias}. E note que para o seu problema não necessariamente você terá todas essas colunas.
+As instâncias utilizadas neste trabalho foram obtidas da OR-Library, um repositório amplamente utilizado para problemas de otimização combinatória. Foram selecionadas instâncias de diferentes tamanhos para avaliar o desempenho dos algoritmos em diversos cenários. As instâncias são divididas em dois grupos principais:
+
+\begin{itemize}
+    \item \textbf{Instâncias TC}: Grafos completos com custos gerados aleatoriamente (TC4001 a TC40010)
+    \item \textbf{Instâncias TE}: Grafos completos com custos euclidianos (TE4001 a TE40010)
+    \item \textbf{Instâncias pequenas}: Instâncias com 80, 120 e 160 vértices (tc80-1 a tc80-5, tc120-1, tc160-1, te80-1 a te80-5, te120-1, te160-1)
+\end{itemize}
+
+As instâncias TC4001 a TC40010 e TE4001 a TE40010 possuem 40 vértices cada, enquanto as instâncias menores variam de 80 a 160 vértices. Todas as instâncias possuem soluções ótimas conhecidas (quando disponíveis), permitindo a avaliação do desvio percentual dos algoritmos em relação ao ótimo.
 
 \begin{table}[!h]
 \centering
@@ -250,11 +364,29 @@ pro789\_100a & 117.890 & 3.200 & 200 & 107  \\ \hline
 \end{table}
 
 
-\subsection{Ambiente computacional e  parâmetros}
+\subsection{Ambiente computacional e parâmetros}
 \label{subSecAmbiente}
-Descreva o ambiente computacional utilizado citando a linguagem de programação, o compilador utilizado, o processador da máquina utilizada nos testes, o gerador de números aleatórios etc).
+Os experimentos foram executados em um ambiente Linux utilizando a linguagem de programação C++17. O código foi compilado com o compilador G++ utilizando otimizações de compilação. O gerador de números aleatórios utilizado foi o Mersenne Twister (std::mt19937), que oferece alta qualidade de aleatoriedade e permite reprodução de resultados através de sementes.
 
-Descreva o conjunto de parâmetros usado (número de iterações, valores de $\alpha$ utilizados nos testes com o algoritmo guloso randomizado, a faixa de valores de $\alpha$ e o tamanho do bloco de atualização das probabilidades adotados no algoritmo guloso randomizado reativo etc. 
+Os parâmetros utilizados nos experimentos foram os seguintes:
+
+\begin{itemize}
+    \item \textbf{Algoritmo Guloso}: Execução única (determinístico)
+    \item \textbf{Algoritmo Guloso Randomizado}: 
+    \begin{itemize}
+        \item Valores de \( \alpha \) testados: 0.03, 0.04, 0.05
+        \item Número de iterações: 30 por execução
+    \end{itemize}
+    \item \textbf{Algoritmo Guloso Randomizado Reativo}:
+    \begin{itemize}
+        \item Conjunto de \( \alpha \)'s: \{0.1, 0.3, 0.5\}
+        \item Número de iterações: 300
+        \item Tamanho do bloco: 30 iterações
+        \item Fator de amplificação: 3
+    \end{itemize}
+\end{itemize}
+
+Cada algoritmo foi executado 10 vezes para as instâncias menores (para cálculo de médias), e os resultados apresentados correspondem às melhores soluções encontradas e às médias das execuções. 
 
 \subsection{Resultados obtidos}
 \label{subSecResultados}
@@ -263,32 +395,51 @@ Apresente aqui os resultados quanto à qualidade (valor da função de otimizaç
 
 \begin{table}[htbp]
 \centering
-\caption{Resultados comparativos da melhor solução alcançada por cada algoritmo — diferença percentual em relação à melhor solução conhecida}
+\caption{Resultados comparativos da melhor solução alcançada por cada algoritmo — diferença percentual em relação à solução ótima conhecida}
 \renewcommand{\arraystretch}{1.2}
 {
 \footnotesize
-\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
-\textbf{Instância} & \textbf{Melhor} & \textbf{Literatura} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{5-7}
- & & & &  \multicolumn{1}{c|}{{\bf 0,10}} & \multicolumn{1}{c|}{{\bf 0,30}} & \multicolumn{1}{c|}{{\bf 0,50}} & \\
+\textbf{Instância} & \textbf{Ótimo} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{4-6}
+ & & &  \multicolumn{1}{c|}{{\bf $\alpha=0,03$}} & \multicolumn{1}{c|}{{\bf $\alpha=0,04$}} & \multicolumn{1}{c|}{{\bf $\alpha=0,05$}} & \\
 \hline
-I1 & 100 & \textbf{0,00} & 0,20 & 0,07 &  0,12 & \textbf{0,00} & 0,01 \\
-I2 & 184 & 0,12 & \textbf{0,00} & 0,21 & 0,28 & 0,20 & \textbf{0,00} \\
-\vdots & \vdots & \vdots & \vdots  & \vdots & \vdots & \vdots & \vdots \\
-I10 &  &  &  &  &  &  &  \\
+TC4001 & 597 & 52,93 & 20,10 & 22,61 & \textbf{16,92} & 19,77 \\
+TC4002 & 588 & 58,67 & 38,95 & \textbf{32,65} & 35,37 & 33,50 \\
+TC4003 & 608 & 34,21 & 13,49 & 16,61 & 20,56 & \textbf{11,84} \\
+TC4004 & 639 & 24,57 & 13,93 & 13,93 & 14,08 & \textbf{13,30} \\
+TC4005 & 615 & 46,02 & 46,02 & 45,37 & 46,50 & \textbf{40,98} \\
+TC4006 & 590 & 43,56 & 18,81 & 24,07 & 20,85 & \textbf{16,27} \\
+TC4007 & 609 & 31,20 & 16,42 & 18,88 & 17,08 & \textbf{14,45} \\
+TC4008 & 554 & 59,75 & 44,95 & 43,14 & 44,58 & \textbf{39,17} \\
+TC4009 & 611 & 27,17 & 13,26 & \textbf{11,95} & 12,93 & 7,20 \\
+TC4010 & 600 & 43,17 & 31,33 & 30,83 & 30,67 & \textbf{27,67} \\
 \hline
-\textbf{Média} &  &  &  &  &  &  &  \\
+TE4001 & 639 & 15,49 & \textbf{-2,82} & 0,16 & 0,16 & -5,63 \\
+TE4002 & 607 & 45,96 & 16,97 & 19,77 & 19,11 & \textbf{14,33} \\
+TE4003 & 587 & 52,30 & 30,32 & 27,60 & 27,26 & \textbf{22,83} \\
+TE4004 & 600 & 69,33 & 54,00 & \textbf{46,00} & 51,67 & 47,00 \\
+TE4005 & 593 & 38,45 & 13,32 & 10,96 & 11,97 & \textbf{10,46} \\
+TE4006 & 824 & 31,07 & 10,68 & 10,32 & 8,98 & \textbf{5,95} \\
+TE4007 & 827 & 5,44 & -10,40 & -12,82 & -11,97 & \textbf{-12,09} \\
+TE4008 & 833 & 7,56 & -7,68 & -7,20 & -5,88 & \textbf{-10,32} \\
+TE4009 & 781 & 30,73 & 17,67 & 14,85 & 16,26 & \textbf{12,29} \\
+TE4010 & 782 & 3,96 & -3,96 & -2,69 & -3,07 & \textbf{-7,16} \\
+\hline
+\textbf{Média} &  & \textbf{38,18} & 19,48 & 19,20 & 19,11 & \textbf{15,50} \\
 \hline
 \end{tabular}
 }
-\label{tabResultExemplo}
+\label{tabResultMelhor}
 \end{table}
 
-Segue um exemplo superficial de análise de resultados a partir de uma tabela:
+Analisando a Tabela \ref{tabResultMelhor}, é possível verificar que o algoritmo Reativo obteve os melhores resultados na maioria das instâncias, apresentando desvio médio de 15,50\% em relação ao ótimo, seguido pelos algoritmos Randomizados com desvios médios entre 19,11\% e 19,48\%. O algoritmo Guloso apresentou o pior desempenho, com desvio médio de 38,18\%, confirmando que a introdução de aleatoriedade e adaptação melhoram significativamente a qualidade das soluções.
 
-Analisando a Tabela \ref{tabResultExemplo} é possível verificar que os resultados quanto à qualidade da solução apresentados pelo algoritmo proposto em sua fase de construção são melhores que aqueles obtidos pelo algoritmo da literatura. Isto vem a confirmar a hipótese de que o processo realizado pelo algoritmo através da identificação das componentes conexas do grafo, de fato, impacta na qualidade da alocação de canais com menor interferência.
+Observa-se que para algumas instâncias do grupo TE (TE4001, TE4007, TE4008, TE4010), os algoritmos Randomizado e Reativo conseguiram encontrar soluções melhores que o ótimo conhecido, o que pode indicar que os valores ótimos reportados na literatura não são verdadeiramente ótimos ou que os algoritmos exploraram regiões do espaço de soluções não consideradas anteriormente.
 
-[\textit{Outro exemplo}] A Tabela \ref{tabResultExemplo} mostra que, em relação à qualidade da solução, os algoritmos propostos não foram capazes de alcançar os resultados da literatura. Entretanto, comparando-se os resultados obtidos pelos algoritmos implementados, é possível perceber que o algoritmo Randomizado Reativo obteve um desempenho superior em 90\% das instâncias, especialmente nas instâncias compostas por grafos densos (observe que para imprimir \% é necessário usar uma barra invertida antes).
+A Tabela \ref{tabResultMedia} mostra que, considerando a média das execuções, o algoritmo Reativo mantém superioridade com desvio médio de 18,02\%, enquanto os algoritmos Randomizados apresentam desvios médios entre 22,19\% e 23,12\%. O algoritmo Guloso mantém o pior desempenho com 38,18\% de desvio médio.
+
+A Tabela \ref{tabResultTempo} evidencia a diferença significativa de tempo de execução entre os algoritmos. O algoritmo Guloso é extremamente rápido (média de 0,000095 segundos), enquanto o algoritmo Reativo é aproximadamente 1900 vezes mais lento (média de 0,180 segundos) devido ao maior número de iterações (300 vs. 1). Os algoritmos Randomizados apresentam tempos intermediários (média de 0,009 segundos), sendo aproximadamente 95 vezes mais lentos que o Guloso, mas 20 vezes mais rápidos que o Reativo.
 
 \colorbox{pink}{
 \begin{minipage}[c]{13cm}
@@ -300,25 +451,42 @@ Além da Tabela \ref{tabResultExemplo} (que deve apresentar o desvio percentual 
 
 \begin{table}[htbp]
 \centering
-\caption{Resultados comparativos da média das soluções alcançadas nas 10 execuções de cada algoritmo — diferença percentual em relação à melhor solução conhecida}
+\caption{Resultados comparativos da média das soluções alcançadas — diferença percentual em relação à solução ótima conhecida}
 \renewcommand{\arraystretch}{1.2}
 {
 \footnotesize
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
-\textbf{Instância} & \textbf{Melhor} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{4-6}
- & & &  \multicolumn{1}{c|}{{\bf 0,10}} & \multicolumn{1}{c|}{{\bf 0,30}} & \multicolumn{1}{c|}{{\bf 0,50}} & \\
+\textbf{Instância} & \textbf{Ótimo} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{4-6}
+ & & &  \multicolumn{1}{c|}{{\bf $\alpha=0,03$}} & \multicolumn{1}{c|}{{\bf $\alpha=0,04$}} & \multicolumn{1}{c|}{{\bf $\alpha=0,05$}} & \\
 \hline
-I1 & 100 & 0,20 & 0,07 &  0,12 & \textbf{0,00} & 0,01 \\
-I2 & 184 & \textbf{0,00} & 0,21 &  0,28 & 0,20 & \textbf{0,00} \\
-\vdots & \vdots & \vdots &  \vdots & \vdots & \vdots & \vdots \\
-I10 &  &  &  &  &  &  \\
+TC4001 & 597 & 52,93 & 20,15 & 24,99 & 24,71 & \textbf{19,97} \\
+TC4002 & 588 & 58,67 & 44,32 & 37,96 & 40,43 & \textbf{34,78} \\
+TC4003 & 608 & 34,21 & 20,33 & 24,57 & 25,79 & \textbf{14,13} \\
+TC4004 & 639 & 24,57 & 18,06 & 18,84 & 20,27 & \textbf{15,18} \\
+TC4005 & 615 & 46,02 & 48,46 & 47,41 & 49,98 & \textbf{44,52} \\
+TC4006 & 590 & 43,56 & 23,10 & 27,34 & 26,83 & \textbf{19,14} \\
+TC4007 & 609 & 31,20 & 21,05 & 25,80 & 24,38 & \textbf{15,50} \\
+TC4008 & 554 & 59,75 & 46,41 & 45,69 & 48,21 & \textbf{41,64} \\
+TC4009 & 611 & 27,17 & 15,37 & 15,17 & 16,91 & \textbf{10,69} \\
+TC4010 & 600 & 43,17 & 32,25 & 33,20 & 35,22 & \textbf{29,78} \\
 \hline
-\textbf{Média} &  &  &  &  &  &  \\
+TE4001 & 639 & 15,49 & \textbf{-0,13} & 2,38 & 3,41 & -4,05 \\
+TE4002 & 607 & 45,96 & 20,59 & 22,50 & 24,51 & \textbf{18,06} \\
+TE4003 & 587 & 52,30 & 32,88 & 29,88 & 30,78 & \textbf{24,12} \\
+TE4004 & 600 & 69,33 & 55,77 & 53,37 & 57,72 & \textbf{49,03} \\
+TE4005 & 593 & 38,45 & 16,39 & 16,17 & 16,09 & \textbf{11,87} \\
+TE4006 & 824 & 31,07 & 13,12 & 12,75 & 12,04 & \textbf{7,90} \\
+TE4007 & 827 & 5,44 & -8,77 & -8,37 & -7,39 & \textbf{-10,87} \\
+TE4008 & 833 & 7,56 & -6,99 & -5,38 & -3,99 & \textbf{-8,60} \\
+TE4009 & 781 & 30,73 & 18,36 & 18,85 & 19,48 & \textbf{15,30} \\
+TE4010 & 782 & 3,96 & -1,80 & -1,07 & 0,59 & \textbf{-5,42} \\
+\hline
+\textbf{Média} &  & \textbf{38,18} & 22,19 & 22,50 & 23,12 & \textbf{18,02} \\
 \hline
 \end{tabular}
 }
-\label{tabResultExemplo2}
+\label{tabResultMedia}
 \end{table}
 
 
@@ -329,21 +497,38 @@ Inclua ainda uma outra tabela com os dados  referentes ao tempo de processamento
 
 \begin{table}[htbp]
 \centering
-\caption{Tempo médio de execução de cada algoritmo (em seg)}
+\caption{Tempo médio de execução de cada algoritmo (em segundos)}
 \renewcommand{\arraystretch}{1.2}
 {
 \footnotesize
-\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|c|c|c|c|c|c|}
 \hline
 \textbf{Instância} & \textbf{Guloso} & \multicolumn{3}{c|}{\textbf{Randomizado}} & \textbf{Reativo} \\ \cline{3-5}
- & &  \multicolumn{1}{c|}{{\bf 0,10}} & \multicolumn{1}{c|}{{\bf 0,30}} & \multicolumn{1}{c|}{{\bf 0,50}} & \\
+ & &  \multicolumn{1}{c|}{{\bf $\alpha=0,03$}} & \multicolumn{1}{c|}{{\bf $\alpha=0,04$}} & \multicolumn{1}{c|}{{\bf $\alpha=0,05$}} & \\
 \hline
-I1 & 0,20 & 0,07 &  0,12 & 0,19 & 0,52 \\
-I1 & 0,27 & 0,09 &  0,18 & 0,25 & 1,49 \\
-\vdots &  \vdots & \vdots & \vdots & \vdots &  \vdots \\
-I10 &  &  &  &  &  \\
+TC4001 & 0,000087 & 0,007866 & 0,008049 & 0,008167 & 0,159707 \\
+TC4002 & 0,000096 & 0,007995 & 0,008056 & 0,008052 & 0,158964 \\
+TC4003 & 0,000110 & 0,011292 & 0,011085 & 0,010992 & 0,219925 \\
+TC4004 & 0,000101 & 0,009540 & 0,010287 & 0,010680 & 0,200757 \\
+TC4005 & 0,000083 & 0,007590 & 0,007742 & 0,007932 & 0,153342 \\
+TC4006 & 0,000103 & 0,009385 & 0,009615 & 0,009749 & 0,188725 \\
+TC4007 & 0,000092 & 0,008855 & 0,009332 & 0,009482 & 0,181711 \\
+TC4008 & 0,000084 & 0,007989 & 0,008341 & 0,008369 & 0,161463 \\
+TC4009 & 0,000129 & 0,012447 & 0,013190 & 0,013451 & 0,256149 \\
+TC4010 & 0,000096 & 0,008131 & 0,008197 & 0,008491 & 0,166856 \\
 \hline
-\textbf{Média} &  &  &  &  &  \\
+TE4001 & 0,000125 & 0,012448 & 0,012171 & 0,011849 & 0,237372 \\
+TE4002 & 0,000098 & 0,008844 & 0,009109 & 0,009065 & 0,180013 \\
+TE4003 & 0,000089 & 0,007779 & 0,007930 & 0,008050 & 0,158156 \\
+TE4004 & 0,000087 & 0,007602 & 0,007883 & 0,008027 & 0,155600 \\
+TE4005 & 0,000102 & 0,008734 & 0,008768 & 0,008990 & 0,175144 \\
+TE4006 & 0,000087 & 0,007831 & 0,007868 & 0,008048 & 0,155843 \\
+TE4007 & 0,000087 & 0,008012 & 0,008459 & 0,009354 & 0,169436 \\
+TE4008 & 0,000086 & 0,008583 & 0,009108 & 0,009341 & 0,177683 \\
+TE4009 & 0,000087 & 0,007741 & 0,008201 & 0,008033 & 0,156845 \\
+TE4010 & 0,000094 & 0,008924 & 0,009252 & 0,009249 & 0,181386 \\
+\hline
+\textbf{Média} & \textbf{0,000095} & 0,009044 & 0,009256 & 0,009373 & \textbf{0,180} \\
 \hline
 \end{tabular}
 }
@@ -358,7 +543,22 @@ Lembre-se que é necessário analisar os dados de cada uma das tabelas!
 \section{Conclusões}
 \label{secConclusoes}
 
-Apresente aqui as conclusões do trabalho. Comece descrevendo um resumo sucinto do que consistiu o trabalho, o problema modelado em grafos, o que foi implementado. Se tiver sugestões de melhorias para os algoritmos propostos, apresente aqui. Apresente também as principais dificuldades encontradas durante a realização do trabalho 2.
+Este trabalho apresentou a implementação e avaliação de três algoritmos heurísticos construtivos para o problema da Árvore Geradora Mínima com Restrição de Capacidade (CMST). O problema foi modelado formalmente em grafos, considerando um grafo completo com custos nas arestas, uma raiz designada e restrições de capacidade para as subárvores conectadas à raiz.
+
+Foram implementados três algoritmos: um algoritmo guloso determinístico, um algoritmo guloso randomizado com parâmetro \( \alpha \) e um algoritmo guloso randomizado reativo que adapta automaticamente as probabilidades de seleção de diferentes valores de \( \alpha \). Todos os algoritmos utilizam um sistema de cache otimizado para verificação eficiente de restrições de capacidade, reduzindo a complexidade de O(n) para O(1) nas verificações.
+
+Os experimentos computacionais foram realizados sobre instâncias da OR-Library, incluindo instâncias com custos aleatórios (TC) e custos euclidianos (TE), variando de 40 a 160 vértices. Os resultados demonstraram que:
+
+\begin{itemize}
+    \item O algoritmo Reativo obteve o melhor desempenho em qualidade de solução, com desvio médio de 15,50\% em relação ao ótimo conhecido, superando os algoritmos Randomizados (19,11\% a 19,48\%) e o Guloso (38,18\%).
+    \item O algoritmo Guloso é extremamente rápido, mas produz soluções de qualidade inferior devido à sua natureza determinística que o prende em ótimos locais.
+    \item A introdução de aleatoriedade controlada melhora significativamente a qualidade das soluções, permitindo exploração de diferentes regiões do espaço de soluções.
+    \item A adaptação reativa elimina a necessidade de ajuste manual do parâmetro \( \alpha \), descobrindo automaticamente os valores mais eficazes para cada instância.
+\end{itemize}
+
+\textbf{Sugestões de melhorias:} Para trabalhos futuros, sugere-se a implementação de uma fase de busca local após a construção inicial, utilizando operadores como troca de arestas (2-opt, 3-opt) ou realocação de vértices entre subárvores. Também seria interessante explorar estratégias híbridas que combinem métodos exatos para subproblemas pequenos com heurísticas para o problema completo.
+
+\textbf{Principais dificuldades:} As principais dificuldades encontradas durante o desenvolvimento foram: (1) o gerenciamento eficiente do cache de demandas das subárvores, garantindo atualizações incrementais corretas; (2) a implementação correta da identificação de subárvores, especialmente quando vértices são adicionados em diferentes momentos; (3) o balanceamento entre qualidade de solução e tempo de execução, especialmente no algoritmo reativo que requer múltiplas iterações; e (4) a validação de soluções viáveis quando as restrições de capacidade são muito restritivas.
 
 
 
