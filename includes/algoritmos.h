@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include "grafo.h"
 #include "solucao.h"
 #include "utils.h"
@@ -31,6 +32,13 @@ struct Candidato {
 class Algoritmos {
 private:
     const Grafo* grafo;
+    
+    // Cache para otimização de performance
+    mutable std::vector<int> demandaSubarvore;  // demandaSubarvore[subId] = demanda da subárvore
+    mutable std::vector<int> subarvoreVertice;  // subarvoreVertice[v] = ID da subárvore do vértice v
+    mutable std::map<int, int> filhoRaizParaSubId;  // Maps root child -> subtree ID
+    mutable int proximoSubId;  // Next available subtree ID
+    mutable bool cacheValido;  // Cache validity flag
 
     /**
      * Calcula a demanda atual de uma subárvore na solução parcial
@@ -39,6 +47,25 @@ private:
      * @return Demanda total da subárvore
      */
     int calcularDemandaSubarvore(const Solucao& solucao, int subarvoreId) const;
+    
+    /**
+     * Inicializa o cache de demandas e subárvores
+     * @param solucao Solução inicial (apenas com raiz)
+     */
+    void inicializarCache(const Solucao& solucao) const;
+    
+    /**
+     * Atualiza o cache incrementalmente quando um vértice é adicionado
+     * @param solucao Solução atual
+     * @param verticeAdicionado Vértice que foi adicionado
+     * @param paiVertice Pai do vértice adicionado
+     */
+    void atualizarCacheDemanda(Solucao& solucao, int verticeAdicionado, int paiVertice) const;
+    
+    /**
+     * Invalida o cache (chamado quando necessário resetar)
+     */
+    void invalidarCache() const;
 
     /**
      * Encontra a subárvore de um vértice (subindo até a raiz)

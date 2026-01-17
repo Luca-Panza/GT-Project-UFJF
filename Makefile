@@ -1,7 +1,7 @@
 # Makefile para o projeto CMST
 # Compilador e flags
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -O2
+CXXFLAGS = -std=c++17 -Wall -O3 -march=native -flto
 
 # Diretórios
 SRC_DIR = src

@@ -1,14 +1,107 @@
 #include "../includes/algoritmos.h"
 #include <algorithm>
 #include <cmath>
-#include <numeric>
 #include <map>
 
 // Construtor
-Algoritmos::Algoritmos(const Grafo* g) : grafo(g) {}
+Algoritmos::Algoritmos(const Grafo* g) : grafo(g), proximoSubId(1), cacheValido(false) {
+    int n = g->getNumVertices();
+    demandaSubarvore.resize(n + 1, 0);  // Reserve space for subtrees (1-indexed)
+    subarvoreVertice.resize(n, -1);
+}
 
 // Destrutor
 Algoritmos::~Algoritmos() {}
+
+// Inicializa o cache
+void Algoritmos::inicializarCache(const Solucao& solucao) const {
+    int n = grafo->getNumVertices();
+    int raiz = grafo->getRaiz();
+    
+    // Reset cache
+    std::fill(demandaSubarvore.begin(), demandaSubarvore.end(), 0);
+    std::fill(subarvoreVertice.begin(), subarvoreVertice.end(), -1);
+    filhoRaizParaSubId.clear();
+    proximoSubId = 1;
+    
+    // Raiz pertence à subárvore 0
+    subarvoreVertice[raiz] = 0;
+    
+    // Inicializar subárvores existentes (se houver vértices já conectados)
+    for (int i = 0; i < n; i++) {
+        if (i != raiz && solucao.getPai(i) == raiz) {
+            // Este é um filho direto da raiz - nova subárvore
+            int subId = proximoSubId++;
+            filhoRaizParaSubId[i] = subId;
+            subarvoreVertice[i] = subId;
+            demandaSubarvore[subId] = grafo->getDemanda(i);
+            
+            // Adicionar todos os descendentes usando BFS
+            std::vector<int> fila;
+            fila.push_back(i);
+            size_t idx = 0;
+            
+            while (idx < fila.size()) {
+                int v = fila[idx++];
+                for (int j = 0; j < n; j++) {
+                    if (j != raiz && solucao.getPai(j) == v) {
+                        subarvoreVertice[j] = subId;
+                        demandaSubarvore[subId] += grafo->getDemanda(j);
+                        fila.push_back(j);
+                    }
+                }
+            }
+        }
+    }
+    
+    cacheValido = true;
+}
+
+// Atualiza o cache incrementalmente
+void Algoritmos::atualizarCacheDemanda(Solucao& solucao, int verticeAdicionado, int paiVertice) const {
+    int raiz = grafo->getRaiz();
+    int demandaVertice = grafo->getDemanda(verticeAdicionado);
+    
+    if (paiVertice == raiz) {
+        // Nova subárvore
+        int subId = proximoSubId++;
+        filhoRaizParaSubId[verticeAdicionado] = subId;
+        subarvoreVertice[verticeAdicionado] = subId;
+        if (subId >= (int)demandaSubarvore.size()) {
+            demandaSubarvore.resize(subId + 1, 0);
+        }
+        demandaSubarvore[subId] = demandaVertice;
+    } else {
+        // Adicionar a subárvore existente
+        // O pai deve estar no cache porque foi adicionado anteriormente
+        int subId = -1;
+        if (cacheValido && paiVertice >= 0 && paiVertice < (int)subarvoreVertice.size()) {
+            subId = subarvoreVertice[paiVertice];
+        }
+        
+        // Se não encontrou no cache, usar encontrarSubarvore como fallback
+        if (subId <= 0) {
+            subId = encontrarSubarvore(solucao, paiVertice);
+        }
+        
+        if (subId > 0) {
+            subarvoreVertice[verticeAdicionado] = subId;
+            if (subId >= (int)demandaSubarvore.size()) {
+                demandaSubarvore.resize(subId + 1, 0);
+            }
+            demandaSubarvore[subId] += demandaVertice;
+        }
+    }
+}
+
+// Invalida o cache
+void Algoritmos::invalidarCache() const {
+    cacheValido = false;
+    std::fill(demandaSubarvore.begin(), demandaSubarvore.end(), 0);
+    std::fill(subarvoreVertice.begin(), subarvoreVertice.end(), -1);
+    filhoRaizParaSubId.clear();
+    proximoSubId = 1;
+}
 
 // Calcula a demanda atual de uma subárvore
 int Algoritmos::calcularDemandaSubarvore(const Solucao& solucao, int subarvoreId) const {
@@ -71,13 +164,25 @@ int Algoritmos::encontrarSubarvore(const Solucao& solucao, int vertice) const {
     
     if (vertice == raiz) return 0;
     
-    // Subir até encontrar o filho direto da raiz
+    // Se cache está válido e temos informação, usar cache
+    if (cacheValido && vertice >= 0 && vertice < (int)subarvoreVertice.size()) {
+        if (subarvoreVertice[vertice] >= 0) {
+            return subarvoreVertice[vertice];
+        }
+    }
+    
+    // Fallback: subir até encontrar o filho direto da raiz
     int atual = vertice;
     while (atual != -1 && atual != raiz) {
         int pai = solucao.getPai(atual);
         if (pai == raiz) {
             // Encontramos o filho direto da raiz
-            // Retornar o índice desta subárvore
+            // Usar mapa para lookup O(1)
+            auto it = filhoRaizParaSubId.find(atual);
+            if (it != filhoRaizParaSubId.end()) {
+                return it->second;
+            }
+            // Se não está no mapa, calcular (deve ser raro)
             int n = grafo->getNumVertices();
             int idx = 1;
             for (int i = 0; i < n; i++) {
@@ -104,51 +209,19 @@ bool Algoritmos::podeAdicionar(const Solucao& solucao, int vertice, int paiVerti
         return demandaVertice <= capacidade;
     }
     
-    // Encontrar a qual subárvore o pai pertence e calcular demanda atual
-    int n = grafo->getNumVertices();
-    
-    // Subir até a raiz para encontrar o filho direto da raiz
-    int atual = paiVertice;
-    while (atual != -1 && atual != raiz) {
-        int pai = solucao.getPai(atual);
-        if (pai == raiz) {
-            break;  // atual é o filho direto da raiz
-        }
-        atual = pai;
+    // Usar cache para obter demanda da subárvore (O(1) em vez de O(n))
+    int subId = encontrarSubarvore(solucao, paiVertice);
+    if (subId <= 0) {
+        return true;  // Não conectado ou raiz
     }
     
-    if (atual == -1 || atual == raiz) {
-        return true;  // Pai não conectado ou é a raiz
-    }
-    
-    // Calcular demanda atual da subárvore usando BFS
+    // Obter demanda do cache
     int demandaAtual = 0;
-    std::vector<bool> visitado(n, false);
-    std::vector<int> fila;
-    fila.push_back(atual);
-    visitado[atual] = true;
-    
-    // Construir árvore de adjacência
-    std::vector<std::vector<int>> filhos(n);
-    for (int i = 0; i < n; i++) {
-        int pai = solucao.getPai(i);
-        if (pai != -1 && pai != i) {
-            filhos[pai].push_back(i);
-        }
-    }
-    
-    // BFS para somar demandas
-    size_t idx = 0;
-    while (idx < fila.size()) {
-        int v = fila[idx++];
-        demandaAtual += grafo->getDemanda(v);
-        
-        for (int filho : filhos[v]) {
-            if (!visitado[filho]) {
-                visitado[filho] = true;
-                fila.push_back(filho);
-            }
-        }
+    if (cacheValido && subId < (int)demandaSubarvore.size()) {
+        demandaAtual = demandaSubarvore[subId];
+    } else {
+        // Fallback: calcular demanda (não deveria acontecer se cache está válido)
+        demandaAtual = calcularDemandaSubarvore(solucao, subId);
     }
     
     return (demandaAtual + demandaVertice) <= capacidade;
@@ -156,18 +229,30 @@ bool Algoritmos::podeAdicionar(const Solucao& solucao, int vertice, int paiVerti
 
 // Gera lista de candidatos viáveis
 std::vector<Candidato> Algoritmos::gerarCandidatos(const Solucao& solucao, const std::vector<bool>& conectados) const {
-    std::vector<Candidato> candidatos;
     int n = grafo->getNumVertices();
     int raiz = grafo->getRaiz();
     
-    // Para cada vértice não conectado
-    for (int v = 0; v < n; v++) {
-        if (conectados[v]) continue;
-        
-        // Tentar conectar a cada vértice já conectado
-        for (int p = 0; p < n; p++) {
-            if (!conectados[p]) continue;
-            
+    // Pre-filtrar vértices para reduzir iterações
+    std::vector<int> naoConectados;
+    std::vector<int> conectadosList;
+    naoConectados.reserve(n);
+    conectadosList.reserve(n);
+    
+    for (int i = 0; i < n; i++) {
+        if (conectados[i]) {
+            conectadosList.push_back(i);
+        } else {
+            naoConectados.push_back(i);
+        }
+    }
+    
+    // Pre-alocar candidatos com estimativa
+    std::vector<Candidato> candidatos;
+    candidatos.reserve(naoConectados.size() * conectadosList.size() / 4);  // Estimativa conservadora
+    
+    // Iterar apenas sobre listas filtradas
+    for (int v : naoConectados) {
+        for (int p : conectadosList) {
             // Verificar se existe aresta
             if (!grafo->existeAresta(v, p)) continue;
             
@@ -193,6 +278,9 @@ Solucao Algoritmos::construirGuloso() const {
     int n = grafo->getNumVertices();
     int raiz = grafo->getRaiz();
     
+    // Inicializar cache
+    inicializarCache(solucao);
+    
     // List de elementos que foram conectados. Cada posiçao corresponde a um vértice. Se o vértice foi conectado, o valor é true, caso contrário, false.
     std::vector<bool> conectados(n, false);
 
@@ -214,6 +302,7 @@ Solucao Algoritmos::construirGuloso() const {
                         solucao.setPai(v, raiz);
                         conectados[v] = true;
                         numConectados++;
+                        atualizarCacheDemanda(solucao, v, raiz);
                         conectouAlgum = true;
                         break;
                     }
@@ -230,14 +319,12 @@ Solucao Algoritmos::construirGuloso() const {
             solucao.setPai(melhor.vertice, melhor.pai);
             conectados[melhor.vertice] = true;
             numConectados++;
+            atualizarCacheDemanda(solucao, melhor.vertice, melhor.pai);
         }
     }
     
     solucao.calcularCusto();
     solucao.verificarViabilidade();
-
-    std::cout << "Custo total: " << solucao.getCustoTotal() << std::endl;
-    std::cout << "Viabilidade: " << solucao.isValida() << std::endl;
     
     return solucao;
 }
@@ -247,6 +334,9 @@ Solucao Algoritmos::construirGulosoRandomizado(double alpha) const {
     Solucao solucao(grafo);
     int n = grafo->getNumVertices();
     int raiz = grafo->getRaiz();
+    
+    // Inicializar cache
+    inicializarCache(solucao);
     
     std::vector<bool> conectados(n, false);
     conectados[raiz] = true;
@@ -266,6 +356,7 @@ Solucao Algoritmos::construirGulosoRandomizado(double alpha) const {
                         solucao.setPai(v, raiz);
                         conectados[v] = true;
                         numConectados++;
+                        atualizarCacheDemanda(solucao, v, raiz);
                         conectouAlgum = true;
                         break;
                     }
@@ -290,6 +381,7 @@ Solucao Algoritmos::construirGulosoRandomizado(double alpha) const {
             solucao.setPai(escolhido.vertice, escolhido.pai);
             conectados[escolhido.vertice] = true;
             numConectados++;
+            atualizarCacheDemanda(solucao, escolhido.vertice, escolhido.pai);
         }
     }
     
