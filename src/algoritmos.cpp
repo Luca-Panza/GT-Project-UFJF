@@ -194,7 +194,10 @@ Solucao Algoritmos::construirGuloso() const {
     int n = grafo->getNumVertices();
     int raiz = grafo->getRaiz();
     
+    // List de elementos que foram conectados. Cada posiçao corresponde a um vértice. Se o vértice foi conectado, o valor é true, caso contrário, false.
     std::vector<bool> conectados(n, false);
+
+    // A raiz é sempre conectada
     conectados[raiz] = true;
     int numConectados = 1;
     
